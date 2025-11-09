@@ -577,54 +577,99 @@ public class DisasterRestController {
     }
 
     // ============ ENDPOINTS DE ESTADÍSTICAS ============
+// ============ ENDPOINTS DE ESTADÍSTICAS ============
 
-    @GetMapping("/estadisticas")
-    public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
-        Map<String, Object> estadisticas = new HashMap<>();
+@GetMapping("/estadisticas")
+public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
 
-        estadisticas.put("totalZonas", sistema.getZonas().size());
-        estadisticas.put("totalRecursos", sistema.getRecursos().size());
-        estadisticas.put("totalEquipos", sistema.getEquipos().size());
-        estadisticas.put("totalEvacuaciones", sistema.getEvacuaciones().size());
-        estadisticas.put("totalRutas", sistema.getRutas().size());
+    Map<String, Object> estadisticas = new HashMap<>();
 
-        // Zonas por nivel de urgencia
-        Map<String, Long> zonasPorUrgencia = sistema.getZonas().stream()
-                .collect(Collectors.groupingBy(
-                        zona -> zona.getNivelUrgencia().getDescripcion(),
-                        Collectors.counting()
-                ));
-        estadisticas.put("zonasPorUrgencia", zonasPorUrgencia);
+    // ===== 1. Totales generales (por cantidad de registros) =====
+    estadisticas.put("totalZonas", sistema.getZonas().size());
+    estadisticas.put("totalEquipos", sistema.getEquipos().size());
+    estadisticas.put("totalEvacuaciones", sistema.getEvacuaciones().size());
+    estadisticas.put("totalRutas", sistema.getRutas().size());
 
-        // Recursos por tipo
-        Map<String, Integer> recursosPorTipo = sistema.resumenRecursosPorTipo().entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> entry.getKey().getDescripcion(),
-                        Map.Entry::getValue
-                ));
-        estadisticas.put("recursosPorTipo", recursosPorTipo);
+    // Total de recursos = suma de cantidades (no solo cuántos registros hay)
+    int totalRecursos = sistema.getRecursos().stream()
+            .mapToInt(Recurso::getCantidad)
+            .sum();
+    estadisticas.put("totalRecursos", totalRecursos);
 
-        // Equipos por estado
-        Map<String, Long> equiposPorEstado = sistema.getEquipos().stream()
-                .collect(Collectors.groupingBy(
-                        equipo -> equipo.getEstado().getDescripcion(),
-                        Collectors.counting()
-                ));
-        estadisticas.put("equiposPorEstado", equiposPorEstado);
+    // ===== 2. Porcentaje de recursos disponibles =====
+    int total = 0;
+    int disponibles = 0;
 
-        // Zonas críticas
-        List<Map<String, Object>> zonasCriticas = sistema.topZonasCriticas(5).stream()
-                .map(zona -> Map.of(
-                        "id", (Object)zona.getId(),
-                        "nombre", zona.getNombre(),
-                        "poblacionAfectada", zona.getPoblacionAfectada(),
-                        "nivelUrgencia", zona.getNivelUrgencia().getDescripcion()
-                ))
-                .collect(Collectors.toList());
-        estadisticas.put("zonasCriticas", zonasCriticas);
-
-        return ResponseEntity.ok(estadisticas);
+    for (Recurso r : sistema.getRecursos()) {
+        int cantTotal = r.getCantidad();             // int, no hace falta null-check
+        int cantDisp  = r.getCantidadDisponible();   // int, no hace falta null-check
+        total += cantTotal;
+        disponibles += cantDisp;
     }
+
+    if (total > 0) {
+        long porc = Math.round(disponibles * 100.0 / total);
+        estadisticas.put("porcentajeRecursosDisponibles", porc);
+    } else {
+        estadisticas.put("porcentajeRecursosDisponibles", null);
+    }
+
+    // ===== 3. Porcentaje de evacuaciones completadas =====
+    int totalEvac = sistema.getEvacuaciones().size();
+    if (totalEvac > 0) {
+        long completadas = sistema.getEvacuaciones().stream()
+                .filter(ev -> ev.getEstado() != null &&
+                        ("COMPLETADA".equals(ev.getEstado().name())
+                                || "FINALIZADA".equals(ev.getEstado().name())))
+                .count();
+        long porcEvac = Math.round(completadas * 100.0 / totalEvac);
+        estadisticas.put("porcentajeEvacuacionesCompletadas", porcEvac);
+    } else {
+        estadisticas.put("porcentajeEvacuacionesCompletadas", null);
+    }
+
+    // ===== 4. Zonas por nivel de urgencia =====
+    Map<String, Long> zonasPorUrgencia = sistema.getZonas().stream()
+            .collect(Collectors.groupingBy(
+                    zona -> zona.getNivelUrgencia().getDescripcion(),
+                    Collectors.counting()
+            ));
+    estadisticas.put("zonasPorUrgencia", zonasPorUrgencia);
+
+    // ===== 5. Recursos por tipo =====
+    // resumenRecursosPorTipo() devuelve Map<TipoRecurso, Integer>
+    Map<String, Integer> recursosPorTipo = sistema.resumenRecursosPorTipo()
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(
+                    entry -> entry.getKey().getDescripcion(),
+                    Map.Entry::getValue
+            ));
+    estadisticas.put("recursosPorTipo", recursosPorTipo);
+
+    // ===== 6. Equipos por estado =====
+    Map<String, Long> equiposPorEstado = sistema.getEquipos().stream()
+            .collect(Collectors.groupingBy(
+                    equipo -> equipo.getEstado().getDescripcion(),
+                    Collectors.counting()
+            ));
+    estadisticas.put("equiposPorEstado", equiposPorEstado);
+
+    // ===== 7. Top 5 zonas críticas =====
+    List<Map<String, Object>> zonasCriticas = sistema.topZonasCriticas(5).stream()
+            .map(zona -> {
+                Map<String, Object> mapa = new HashMap<>();
+                mapa.put("id", zona.getId());
+                mapa.put("nombre", zona.getNombre());
+                mapa.put("poblacionAfectada", zona.getPoblacionAfectada());
+                mapa.put("nivelUrgencia", zona.getNivelUrgencia().getDescripcion());
+                return mapa;
+            })
+            .collect(Collectors.toList());
+    estadisticas.put("zonasCriticas", zonasCriticas);
+
+    return ResponseEntity.ok(estadisticas);
+}
 
     @GetMapping("/reporte")
     public ResponseEntity<Map<String, Object>> obtenerReporteGeneral() {

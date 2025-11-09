@@ -342,6 +342,632 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
+        /* ===================================
+   SISTEMA DE PESTAÑAS
+   =================================== */
+.tabs-container {
+    min-height: calc(100vh - 80px);
+}
+
+.tabs-header {
+    background: white;
+    border-bottom: 2px solid #e1e8ed;
+    display: flex;
+    gap: 0;
+    padding: 0 32px;
+    overflow-x: auto;
+}
+
+.tab-button {
+    background: transparent;
+    border: none;
+    padding: 16px 24px;
+    color: #718096;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.tab-button i {
+    font-size: 1.1rem;
+}
+
+.tab-button:hover {
+    color: #2d3748;
+    background: #f7fafc;
+}
+
+.tab-button.active {
+    color: #2d3748;
+    border-bottom-color: #2d3748;
+    background: #f7fafc;
+}
+
+.tabs-content {
+    background: #f5f7fa;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================
+   PESTAÑA INICIO - BIENVENIDA
+   =================================== */
+.welcome-section {
+    background: white;
+    padding: 32px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.welcome-section h1 {
+    color: #1a202c;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.welcome-section .subtitle {
+    color: #718096;
+    font-size: 1.05rem;
+}
+
+/* ===================================
+   TARJETAS DE ESTADÍSTICAS
+   =================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+}
+
+.stat-zonas .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stat-recursos .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stat-equipos .stat-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stat-evacuaciones .stat-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.stat-detail {
+    color: #4a5568;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e1e8ed;
+}
+
+/* ===================================
+   CONTENEDORES DE SECCIÓN
+   =================================== */
+.section-container {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f7fafc;
+}
+
+.section-header h2 {
+    color: #1a202c;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-refresh {
+    background: #f7fafc;
+    border: 1px solid #e1e8ed;
+    padding: 8px 16px;
+    border-radius: 6px;
+    color: #2d3748;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-refresh:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+/* ===================================
+   GRID DE ZONAS
+   =================================== */
+.zones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.zone-card {
+    background: #f7fafc;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.zone-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.zone-title {
+    font-weight: 700;
+    color: #1a202c;
+    font-size: 1.1rem;
+}
+
+.zone-urgency {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.urgency-critica {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.urgency-alta {
+    background: #feebc8;
+    color: #c05621;
+}
+
+.urgency-media {
+    background: #fefcbf;
+    color: #975a16;
+}
+
+.urgency-baja {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.zone-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.zone-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.zone-info-item i {
+    color: #718096;
+    width: 18px;
+}
+
+/* ===================================
+   GRID DE RECURSOS
+   =================================== */
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.resource-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.2s;
+}
+
+.resource-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.resource-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+}
+
+.resource-type {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.resource-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.resource-progress {
+    background: rgba(255,255,255,0.3);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.resource-progress-bar {
+    background: white;
+    height: 100%;
+    transition: width 0.3s;
+}
+
+/* ===================================
+   LISTA DE EQUIPOS
+   =================================== */
+.teams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.team-card {
+    background: #f7fafc;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+}
+
+.team-card:hover {
+    background: white;
+    border-color: #cbd5e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.team-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.team-details {
+    flex: 1;
+}
+
+.team-name {
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 4px;
+}
+
+.team-type {
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.team-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-disponible {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.status-operacion {
+    background: #feebc8;
+    color: #c05621;
+}
+
+.status-transito {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.efficiency-bar {
+    width: 100px;
+    height: 8px;
+    background: #e1e8ed;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.efficiency-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    transition: width 0.3s;
+}
+
+/* ===================================
+   ACCIONES RÁPIDAS
+   =================================== */
+.quick-actions {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.quick-actions h3 {
+    color: #1a202c;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.action-btn {
+    background: #f7fafc;
+    border: 2px solid #e1e8ed;
+    padding: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.action-btn i {
+    font-size: 1.8rem;
+    color: #667eea;
+}
+
+.action-btn:hover {
+    background: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+/* ===================================
+   ESTADOS DE CARGA
+   =================================== */
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+    font-size: 1.1rem;
+}
+
+.loading-state i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #cbd5e0;
+    display: block;
+}
+
+.empty-state h3 {
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .zones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .tabs-header {
+        padding: 0 16px;
+    }
+    
+    .tab-button {
+        padding: 12px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .tab-button span {
+        display: none; /* Ocultar texto en móviles, solo iconos */
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        flex-direction: row;
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+    }
+    
+    .zones-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .resources-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .team-status {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .team-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .team-status {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -439,7 +1065,7 @@
     </div>
 </div>
 
-<!-- Dashboard -->
+<!-- Dashboard con Sistema de Pestañas -->
 <div id="dashboard" class="dashboard">
     <nav class="navbar">
         <h2><i class="fas fa-shield-alt"></i> Gestión de Desastres Naturales 2025</h2>
@@ -449,96 +1075,320 @@
         </div>
     </nav>
 
+    <!-- Sistema de Pestañas -->
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button class="tab-button active" onclick="switchTab('inicio')" data-tab="inicio">
+                <i class="fas fa-home"></i> Inicio
+            </button>
+            <button class="tab-button" onclick="switchTab('admin')" data-tab="admin">
+                <i class="fas fa-tools"></i> Panel de Administración
+            </button>
+            <button class="tab-button" onclick="switchTab('rutas')" data-tab="rutas">
+                <i class="fas fa-route"></i> Panel de Rutas
+            </button>
+            <button class="tab-button" onclick="switchTab('estadisticas')" data-tab="estadisticas">
+                <i class="fas fa-chart-bar"></i> Estadísticas
+            </button>
+            <button class="tab-button" onclick="switchTab('mapa')" data-tab="mapa">
+                <i class="fas fa-map-marked-alt"></i> Mapa Interactivo
+            </button>
+        </div>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tabs-content">
+            
+            <!-- ============================================ -->
+            <!-- PESTAÑA: INICIO -->
+            <!-- ============================================ -->
+            <div id="inicio-tab" class="tab-content active">
+                <div class="container">
+                    <!-- Encabezado de Bienvenida -->
+                    <div class="welcome-section">
+                        <h1><i class="fas fa-tachometer-alt"></i> Panel de Control General</h1>
+                        <p class="subtitle">Visualización en tiempo real del estado del sistema de gestión de desastres</p>
+                    </div>
+
+                    <!-- Tarjetas de Resumen -->
+                    <div class="stats-grid">
+                        <div class="stat-card stat-zonas">
+                            <div class="stat-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalZonas">0</div>
+                                <div class="stat-label">Zonas Monitoreadas</div>
+                                <div class="stat-detail" id="zonasCriticas">0 críticas</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card stat-recursos">
+                            <div class="stat-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalRecursos">0</div>
+                                <div class="stat-label">Recursos Disponibles</div>
+                                <div class="stat-detail" id="recursosDisponibles">0% disponibilidad</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card stat-equipos">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalEquipos">0</div>
+                                <div class="stat-label">Equipos de Rescate</div>
+                                <div class="stat-detail" id="equiposDisponibles">0 disponibles</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card stat-evacuaciones">
+                            <div class="stat-icon">
+                                <i class="fas fa-ambulance"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalEvacuaciones">0</div>
+                                <div class="stat-label">Evacuaciones Activas</div>
+                                <div class="stat-detail" id="evacuacionesProgreso">0% progreso</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Zonas Críticas -->
+                    <div class="section-container">
+                        <div class="section-header">
+                            <h2><i class="fas fa-exclamation-triangle"></i> Zonas Críticas</h2>
+                            <button class="btn-refresh" onclick="loadInicioData()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                        <div id="zonasDisplay" class="zones-grid">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando zonas...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Recursos Disponibles -->
+                    <div class="section-container">
+                        <div class="section-header">
+                            <h2><i class="fas fa-warehouse"></i> Recursos Disponibles por Tipo</h2>
+                        </div>
+                        <div id="recursosDisplay" class="resources-grid">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Equipos de Rescate -->
+                    <div class="section-container">
+                        <div class="section-header">
+                            <h2><i class="fas fa-user-shield"></i> Estado de Equipos de Rescate</h2>
+                        </div>
+                        <div id="equiposDisplay" class="teams-list">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando equipos...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones Rápidas -->
+                    <div class="quick-actions">
+                        <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+                        <div class="actions-grid">
+                            <button class="action-btn" onclick="switchTab('admin')">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Agregar Recurso</span>
+                            </button>
+                            <button class="action-btn" onclick="switchTab('rutas')">
+                                <i class="fas fa-route"></i>
+                                <span>Planificar Evacuación</span>
+                            </button>
+                            <button class="action-btn" onclick="switchTab('mapa')">
+                                <i class="fas fa-map"></i>
+                                <span>Ver Mapa Completo</span>
+                            </button>
+                            <button class="action-btn" onclick="switchTab('estadisticas')">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Ver Estadísticas</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PESTAÑA: PANEL DE ADMINISTRACIÓN (Placeholder) -->
+            <!-- ============================================ -->
+            <div id="admin-tab" class="tab-content">
+                <div class="container">
+                    <h1><i class="fas fa-tools"></i> Panel de Administración</h1>
+                    <p>Funcionalidad en desarrollo...</p>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PESTAÑA: PANEL DE RUTAS (Placeholder) -->
+            <!-- ============================================ -->
+            <div id="rutas-tab" class="tab-content">
+                <div class="container">
+                    <h1><i class="fas fa-route"></i> Panel de Rutas</h1>
+                    <p>Funcionalidad en desarrollo...</p>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PESTAÑA: ESTADÍSTICAS (Placeholder) -->
+            <!-- ============================================ -->
+<div id="estadisticas-tab" class="tab-content">
     <div class="container">
-        <div class="hero">
-            <h1>Sistema de Gestión con Routing Real y Zonas Delimitadas</h1>
-            <div class="features">
-                <div class="feature-card">
-                    <h3><i class="fas fa-route"></i> Routing Real</h3>
-                    <p>Rutas siguiendo calles y carreteras reales con OpenStreetMap</p>
+        <div class="welcome-section">
+            <h1><i class="fas fa-chart-bar"></i> Estadísticas del Sistema</h1>
+            <p class="subtitle">
+                Análisis de zonas, recursos y equipos basado en las estructuras internas
+                del sistema de gestión de desastres.
+            </p>
+        </div>
+
+        <!-- Resumen numérico rápido -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#667eea,#764ba2);">
+                    <i class="fas fa-map-marker-alt"></i>
                 </div>
-                <div class="feature-card">
-                    <h3><i class="fas fa-map-marker-alt"></i> Zonas con Área</h3>
-                    <p>Define zonas circulares con radio ajustable</p>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalZonas">0</div>
+                    <div class="stat-label">Zonas registradas</div>
                 </div>
-                <div class="feature-card">
-                    <h3><i class="fas fa-project-diagram"></i> Dijkstra + OSM</h3>
-                    <p>Algoritmo de Dijkstra aplicado sobre vías reales</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#f093fb,#f5576c);">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalRecursos">0</div>
+                    <div class="stat-label">Recursos totales</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#4facfe,#00f2fe);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalEquipos">0</div>
+                    <div class="stat-label">Equipos de rescate</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#43e97b,#38f9d7);">
+                    <i class="fas fa-ambulance"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalEvacuaciones">0</div>
+                    <div class="stat-label">Evacuaciones planificadas</div>
                 </div>
             </div>
         </div>
 
-        <div class="main-actions">
-            <div class="action-card" onclick="showMap()">
-                <h2><i class="fas fa-map"></i> Mapa Interactivo</h2>
-                <p>Visualiza zonas con áreas y rutas por calles reales</p>
-                <button class="btn-action"><i class="fas fa-external-link-alt"></i> Abrir Mapa</button>
+        <!-- Gráfica: Zonas por nivel de urgencia -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Zonas por nivel de urgencia</h2>
             </div>
+            <canvas id="chartZonasUrgencia" height="120"></canvas>
         </div>
 
-        <!-- Map Section -->
-        <div id="mapSection" class="hidden">
-            <h2 style="color: #1a202c; margin-bottom: 20px; font-weight: 600;"><i class="fas fa-map-marked-alt"></i> Mapa Interactivo con Routing Real</h2>
-            <div id="map"></div>
+        <!-- Gráfica: Recursos por tipo -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-warehouse"></i> Recursos por tipo</h2>
+            </div>
+            <canvas id="chartRecursosTipo" height="120"></canvas>
+        </div>
 
-            <div class="map-controls">
-                <h3>Modo de Operación</h3>
-                <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="select" onclick="setMode('select')">
-                        <i class="fas fa-mouse-pointer"></i> Seleccionar Punto
-                    </button>
-                    <button class="mode-btn" data-mode="create-zone" onclick="setMode('create-zone')">
-                        <i class="fas fa-draw-polygon"></i> Crear Zona con Área
-                    </button>
-                    <button class="mode-btn" data-mode="calculate-route" onclick="setMode('calculate-route')">
-                        <i class="fas fa-route"></i> Calcular Ruta Real (OSM)
-                    </button>
+        <!-- Gráfica: Equipos por estado -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-user-shield"></i> Equipos por estado</h2>
+            </div>
+            <canvas id="chartEquiposEstado" height="120"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PESTAÑA: MAPA INTERACTIVO -->
+<!-- ============================================ -->
+<div id="mapa-tab" class="tab-content">
+    <div class="container">
+        <h2 style="color: #1a202c; margin-bottom: 20px; font-weight: 600;">
+            <i class="fas fa-map-marked-alt"></i> Mapa Interactivo con Routing Real
+        </h2>
+        <div id="map"></div>
+
+        <div class="map-controls">
+            <h3>Modo de Operación</h3>
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="select" onclick="setMode('select')">
+                    <i class="fas fa-mouse-pointer"></i> Seleccionar Punto
+                </button>
+                <button class="mode-btn" data-mode="create-zone" onclick="setMode('create-zone')">
+                    <i class="fas fa-draw-polygon"></i> Crear Zona con Área
+                </button>
+                <button class="mode-btn" data-mode="calculate-route" onclick="setMode('calculate-route')">
+                    <i class="fas fa-route"></i> Calcular Ruta Real (OSM)
+                </button>
+            </div>
+
+            <div id="modeInstructions" style="background: #fef5e7; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #f39c12; color: #856404;">
+                <strong><i class="fas fa-info-circle"></i> Modo Seleccionar:</strong> Haz clic en el mapa para ver información del lugar
+            </div>
+
+            <div id="selectedLocationInfo">
+                <p style="color: #718096; font-style: italic;"><i class="fas fa-info-circle"></i> Haz clic en el mapa para comenzar</p>
+            </div>
+
+            <div class="legend">
+                <h4><i class="fas fa-list"></i> Leyenda del Mapa</h4>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #4CAF50; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-play" style="color: white; font-size: 12px;"></i>
+                    </div>
+                    <span><strong>Punto de Origen</strong> - Inicio de la ruta</span>
                 </div>
-
-                <div id="modeInstructions" style="background: #fef5e7; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #f39c12; color: #856404;">
-                    <strong><i class="fas fa-info-circle"></i> Modo Seleccionar:</strong> Haz clic en el mapa para ver información del lugar
+                <div class="legend-item">
+                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #F44336; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-flag-checkered" style="color: white; font-size: 12px;"></i>
+                    </div>
+                    <span><strong>Punto de Destino</strong> - Fin de la ruta</span>
                 </div>
-
-                <div id="selectedLocationInfo">
-                    <p style="color: #718096; font-style: italic;"><i class="fas fa-info-circle"></i> Haz clic en el mapa para comenzar</p>
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid #ddd;">
+                <div class="legend-item">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(244, 67, 54, 0.3); border: 3px solid #F44336;"></div>
+                    <span>Zona <strong>CRÍTICA</strong> con área de cobertura</span>
                 </div>
-
-                <div class="legend">
-                    <h4><i class="fas fa-list"></i> Leyenda del Mapa</h4>
-                    <div class="legend-item">
-                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #4CAF50; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-play" style="color: white; font-size: 12px;"></i>
-                        </div>
-                        <span><strong>Punto de Origen</strong> - Inicio de la ruta</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 30px; height: 30px; border-radius: 50%; background: #F44336; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-flag-checkered" style="color: white; font-size: 12px;"></i>
-                        </div>
-                        <span><strong>Punto de Destino</strong> - Fin de la ruta</span>
-                    </div>
-                    <hr style="margin: 12px 0; border: none; border-top: 1px solid #ddd;">
-                    <div class="legend-item">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(244, 67, 54, 0.3); border: 3px solid #F44336;"></div>
-                        <span>Zona <strong>CRÍTICA</strong> con área de cobertura</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 152, 0, 0.3); border: 3px solid #FF9800;"></div>
-                        <span>Zona <strong>ALTA</strong> con área de cobertura</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 193, 7, 0.3); border: 3px solid #FFC107;"></div>
-                        <span>Zona <strong>MEDIA</strong> con área de cobertura</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(76, 175, 80, 0.3); border: 3px solid #4CAF50;"></div>
-                        <span>Zona <strong>BAJA</strong> con área de cobertura</span>
-                    </div>
-                    <hr style="margin: 12px 0; border: none; border-top: 1px solid #ddd;">
-                    <div class="legend-item">
-                        <div style="width: 40px; height: 4px; background: #2196f3; border-radius: 2px;"></div>
-                        <span><strong>Ruta por Calles Reales</strong> (OpenStreetMap)</span>
-                    </div>
+                <div class="legend-item">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 152, 0, 0.3); border: 3px solid #FF9800;"></div>
+                    <span>Zona <strong>ALTA</strong> con área de cobertura</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 193, 7, 0.3); border: 3px solid #FFC107;"></div>
+                    <span>Zona <strong>MEDIA</strong> con área de cobertura</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(76, 175, 80, 0.3); border: 3px solid #4CAF50;"></div>
+                    <span>Zona <strong>BAJA</strong> con área de cobertura</span>
+                </div>
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid #ddd;">
+                <div class="legend-item">
+                    <div style="width: 40px; height: 4px; background: #2196f3; border-radius: 2px;"></div>
+                    <span><strong>Ruta por Calles Reales</strong> (OpenStreetMap)</span>
                 </div>
             </div>
         </div>
@@ -687,16 +1537,20 @@
 
             const data = await response.json();
 
-            if (data.success) {
-                currentUser = data.user;
-                showMessage('loginSuccess', '¡Inicio de sesión exitoso!');
+if (data.success) {
+    currentUser = data.user;
+    showMessage('loginSuccess', '¡Inicio de sesión exitoso!');
 
-                setTimeout(() => {
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    document.getElementById('userInfo').innerHTML = `<i class="fas fa-user"></i> ${data.user.nombre}`;
-                }, 1000);
-            } else {
+    setTimeout(() => {
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('userInfo').innerHTML = `<i class="fas fa-user"></i> ${data.user.nombre}`;
+
+        // cargar datos del panel de inicio
+        loadInicioData();
+    }, 1000);
+}
+ else {
                 showMessage('loginError', data.message || 'Credenciales inválidas');
             }
         } catch (error) {
@@ -790,6 +1644,362 @@
         element.textContent = message;
         element.style.display = 'block';
         setTimeout(() => element.style.display = 'none', 5000);
+    }
+    
+    // Cambiar de pestaña
+function switchTab(tabName) {
+    // 1. Activar botón correcto
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+
+    // 2. Mostrar contenido correcto
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.toggle('active', tab.id === tabName + '-tab');
+    });
+
+    // 3. Si es la pestaña del mapa, inicializarlo/refrescarlo
+    if (tabName === 'mapa') {
+        setTimeout(() => {
+            if (!map) {
+                initializeMap();
+            } else {
+                map.invalidateSize();
+            }
+        }, 100);
+    }
+
+    // 4. Si es la pestaña de inicio, recargar datos del dashboard
+    if (tabName === 'inicio') {
+        loadInicioData();
+    }
+    // 5. Si es la pestaña de estadísticas, cargar las gráficas
+if (tabName === 'estadisticas') {
+    loadEstadisticasTab();
+}
+
+}
+    // ==========================================================
+    //   CARGA DE DATOS PARA LA PESTAÑA INICIO
+    // ==========================================================
+
+    async function loadInicioData() {
+        try {
+            // Mostrar estados de carga
+            document.getElementById('zonasDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando zonas...
+                </div>`;
+            document.getElementById('recursosDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
+                </div>`;
+            document.getElementById('equiposDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando equipos...
+                </div>`;
+
+            // Pedimos todo en paralelo
+            const [statsRes, zonasRes, recursosRes, equiposRes, evacRes] = await Promise.all([
+                fetch(`${API_URL}/estadisticas`, { method: 'GET' }),
+                fetch(`${API_URL}/zonas`, { method: 'GET' }),
+                fetch(`${API_URL}/recursos`, { method: 'GET' }),
+                fetch(`${API_URL}/equipos`, { method: 'GET' }),
+                fetch(`${API_URL}/evacuaciones`, { method: 'GET' })
+            ]);
+
+            const [stats, zonasData, recursosData, equiposData, evacData] = await Promise.all([
+                safeJson(statsRes),
+                safeJson(zonasRes),
+                safeJson(recursosRes),
+                safeJson(equiposRes),
+                safeJson(evacRes)
+            ]);
+
+            // -------------------------
+            // 1. Tarjetas resumen
+            // -------------------------
+            // Totales (si no vienen en /estadisticas, los calculamos)
+            const totalZonas = (stats && stats.totalZonas) ?? (Array.isArray(zonasData) ? zonasData.length : 0);
+            const totalRecursos = (stats && stats.totalRecursos) ?? calcularTotalRecursos(recursosData);
+            const totalEquipos = (stats && stats.totalEquipos) ?? (Array.isArray(equiposData) ? equiposData.length : 0);
+            const totalEvacuaciones = (stats && stats.totalEvacuaciones) ?? (Array.isArray(evacData) ? evacData.length : 0);
+
+            // Zonas críticas
+            const numCriticas = Array.isArray(zonasData)
+                ? zonasData.filter(z => (z.nivelUrgencia || z.urgencia) === 'CRITICA').length
+                : 0;
+
+            // Porcentaje recursos disponibles
+            const porcRecursos = (stats && stats.porcentajeRecursosDisponibles) ??
+                calcularPorcentajeRecursosDisponibles(recursosData);
+
+            // Equipos disponibles
+            const equiposDisponibles = Array.isArray(equiposData)
+                ? equiposData.filter(eq => normalizarEstado(eq.estado) === 'DISPONIBLE').length
+                : 0;
+
+            // Progreso evacuaciones
+            const progresoEvac = (stats && stats.porcentajeEvacuacionesCompletadas) ??
+                calcularPorcentajeEvacuaciones(evacData);
+
+            // Poner valores en las tarjetas
+            document.getElementById('totalZonas').textContent = totalZonas;
+            document.getElementById('zonasCriticas').textContent = `${numCriticas} críticas`;
+
+            document.getElementById('totalRecursos').textContent = totalRecursos;
+            document.getElementById('recursosDisponibles').textContent =
+                porcRecursos !== null ? `${porcRecursos}% disponibilidad` : 'Sin datos de disponibilidad';
+
+            document.getElementById('totalEquipos').textContent = totalEquipos;
+            document.getElementById('equiposDisponibles').textContent = `${equiposDisponibles} disponibles`;
+
+            document.getElementById('totalEvacuaciones').textContent = totalEvacuaciones;
+            document.getElementById('evacuacionesProgreso').textContent =
+                progresoEvac !== null ? `${progresoEvac}% progreso` : 'Sin datos de progreso';
+
+            // -------------------------
+            // 2. Render de listas
+            // -------------------------
+            renderZonasInicio(zonasData);
+            renderRecursosInicio(recursosData);
+            renderEquiposInicio(equiposData);
+
+        } catch (error) {
+            console.error('Error cargando datos de inicio:', error);
+            document.getElementById('zonasDisplay').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando zonas</h3>
+                    <p>Revisa la consola del navegador o la API.</p>
+                </div>`;
+            document.getElementById('recursosDisplay').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando recursos</h3>
+                </div>`;
+            document.getElementById('equiposDisplay').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando equipos</h3>
+                </div>`;
+        }
+    }
+
+    // Helper para leer JSON de forma segura
+    async function safeJson(response) {
+        try {
+            if (!response || !response.ok) return null;
+            return await response.json();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // ==========================
+    //   Helpers de cálculo
+    // ==========================
+
+    function calcularTotalRecursos(recursos) {
+        if (!Array.isArray(recursos)) return 0;
+        return recursos.reduce((sum, r) => {
+            const cant = r.cantidadTotal ?? r.cantidadDisponible ?? r.cantidad ?? 1;
+            return sum + (Number.isFinite(cant) ? cant : 0);
+        }, 0);
+    }
+
+    function calcularPorcentajeRecursosDisponibles(recursos) {
+        if (!Array.isArray(recursos) || recursos.length === 0) return null;
+
+        let total = 0;
+        let disponibles = 0;
+
+        recursos.forEach(r => {
+            const cantTotal = r.cantidadTotal ?? r.cantidad ?? 1;
+            const cantDisp = r.cantidadDisponible ?? (r.disponible === true ? cantTotal : 0);
+
+            total += Number.isFinite(cantTotal) ? cantTotal : 0;
+            disponibles += Number.isFinite(cantDisp) ? cantDisp : 0;
+        });
+
+        if (!total) return null;
+        return Math.round((disponibles / total) * 100);
+    }
+
+    function normalizarEstado(estado) {
+        if (!estado) return '';
+        return String(estado).toUpperCase();
+    }
+
+    function calcularPorcentajeEvacuaciones(evac) {
+        if (!Array.isArray(evac) || evac.length === 0) return null;
+
+        const completadas = evac.filter(e =>
+            ['COMPLETADA', 'FINALIZADA'].includes(normalizarEstado(e.estado))
+        ).length;
+
+        return Math.round((completadas / evac.length) * 100);
+    }
+
+    // ==========================
+    //   Pintar ZONAS en Inicio
+    // ==========================
+    function renderZonasInicio(zonasData) {
+        const cont = document.getElementById('zonasDisplay');
+
+        if (!Array.isArray(zonasData) || zonasData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>No hay zonas registradas</h3>
+                    <p>Agrega zonas desde la API o el panel de administración.</p>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        zonasData.forEach(z => {
+            const urgencia = (z.nivelUrgencia || z.urgencia || 'DESCONOCIDA').toUpperCase();
+            const poblacion = z.poblacionAfectada ?? z.personasAfectadas ?? 0;
+
+            let urgencyClass = 'urgency-media';
+            if (urgencia === 'CRITICA') urgencyClass = 'urgency-critica';
+            else if (urgencia === 'ALTA') urgencyClass = 'urgency-alta';
+            else if (urgencia === 'BAJA') urgencyClass = 'urgency-baja';
+
+            const card = document.createElement('div');
+            card.className = 'zone-card';
+            card.innerHTML = `
+                <div class="zone-header">
+                    <div class="zone-title">${z.nombre || z.id || 'Zona sin nombre'}</div>
+                    <div class="zone-urgency ${urgencyClass}">${urgencia}</div>
+                </div>
+                <div class="zone-info">
+                    <div class="zone-info-item">
+                        <i class="fas fa-id-card"></i>
+                        <span><strong>ID:</strong> ${z.id ?? z.codigo ?? '-'}</span>
+                    </div>
+                    <div class="zone-info-item">
+                        <i class="fas fa-users"></i>
+                        <span><strong>Población afectada:</strong> ${poblacion}</span>
+                    </div>
+                    <div class="zone-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span><strong>Coordenadas:</strong> ${z.coordenadaX ?? z.latitud}, ${z.coordenadaY ?? z.longitud}</span>
+                    </div>
+                    <div class="zone-info-item">
+                        <i class="fas fa-align-left"></i>
+                        <span>${z.descripcion || 'Sin descripción'}</span>
+                    </div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+    }
+
+    // ==========================
+    //   Pintar RECURSOS en Inicio
+    // ==========================
+    function renderRecursosInicio(recursosData) {
+        const cont = document.getElementById('recursosDisplay');
+
+        if (!Array.isArray(recursosData) || recursosData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <h3>No hay recursos registrados</h3>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        // Agrupar por tipo
+        const agrupados = {};
+        recursosData.forEach(r => {
+            const tipo = (r.tipoRecurso || r.tipo || 'OTROS').toUpperCase();
+            if (!agrupados[tipo]) {
+                agrupados[tipo] = { total: 0, disponibles: 0 };
+            }
+
+            const cantTotal = r.cantidadTotal ?? r.cantidad ?? 1;
+            const cantDisp = r.cantidadDisponible ?? (r.disponible === true ? cantTotal : 0);
+
+            agrupados[tipo].total += Number.isFinite(cantTotal) ? cantTotal : 0;
+            agrupados[tipo].disponibles += Number.isFinite(cantDisp) ? cantDisp : 0;
+        });
+
+        Object.entries(agrupados).forEach(([tipo, data]) => {
+            const porc = data.total ? Math.round((data.disponibles / data.total) * 100) : 0;
+
+            const card = document.createElement('div');
+            card.className = 'resource-card';
+            card.innerHTML = `
+                <div class="resource-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="resource-type">${tipo}</div>
+                <div class="resource-amount">${data.total}</div>
+                <div style="font-size: 0.85rem; margin-bottom: 6px;">
+                    ${data.disponibles} disponibles (${porc}%)
+                </div>
+                <div class="resource-progress">
+                    <div class="resource-progress-bar" style="width: ${porc}%;"></div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+    }
+
+    // ==========================
+    //   Pintar EQUIPOS en Inicio
+    // ==========================
+    function renderEquiposInicio(equiposData) {
+        const cont = document.getElementById('equiposDisplay');
+
+        if (!Array.isArray(equiposData) || equiposData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No hay equipos registrados</h3>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        equiposData.forEach(eq => {
+            const nombre = eq.nombre || eq.nombreEquipo || ('Equipo #' + (eq.id ?? ''));
+            const tipo = eq.tipo || eq.tipoEquipo || 'Sin tipo';
+            const estado = normalizarEstado(eq.estado || 'DESCONOCIDO');
+            const eficiencia = eq.porcentajeEficiencia ?? eq.eficiencia ?? null;
+
+            let statusClass = 'status-transito';
+            if (estado === 'DISPONIBLE') statusClass = 'status-disponible';
+            else if (['EN_OPERACION', 'OPERACION', 'ACTIVO'].includes(estado)) statusClass = 'status-operacion';
+
+            const card = document.createElement('div');
+            card.className = 'team-card';
+            card.innerHTML = `
+                <div class="team-info">
+                    <div class="team-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="team-details">
+                        <div class="team-name">${nombre}</div>
+                        <div class="team-type">${tipo}</div>
+                    </div>
+                </div>
+                <div class="team-status">
+                    <span class="status-badge ${statusClass}">${estado}</span>
+                    <div class="efficiency-bar">
+                        <div class="efficiency-fill" style="width: ${eficiencia != null ? Math.max(0, Math.min(100, eficiencia)) : 50}%;"></div>
+                    </div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
     }
 
     // Funciones del Mapa
@@ -1195,14 +2405,10 @@
         }
     }
 
-    function showMap() {
-        document.getElementById('mapSection').classList.remove('hidden');
-        if (!map) {
-            initializeMap();
-        } else {
-            setTimeout(() => map.invalidateSize(), 100);
-        }
-    }
+function showMap() {
+    switchTab('mapa');
+}
+
 
     function logout() {
         if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
