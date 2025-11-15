@@ -201,27 +201,164 @@ public class DisasterRestController {
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/zonas")
+        @PostMapping("/zonas")
     public ResponseEntity<Map<String, Object>> crearZona(@RequestBody Map<String, Object> zonaData) {
-        try {
-            Zona zona = new Zona(
-                    (String) zonaData.get("id"),
-                    (String) zonaData.get("nombre"),
-                    NivelUrgencia.valueOf((String) zonaData.get("nivelUrgencia"))
-            );
-            zona.setDescripcion((String) zonaData.get("descripcion"));
-            zona.setCoordenadaX(((Number) zonaData.get("coordenadaX")).doubleValue());
-            zona.setCoordenadaY(((Number) zonaData.get("coordenadaY")).doubleValue());
-            zona.setPoblacionAfectada(((Number) zonaData.get("poblacionAfectada")).intValue());
-
-            sistema.agregarZona(zona);
-
-            return ResponseEntity.ok(Map.of("success", true, "message", "Zona creada exitosamente"));
-        } catch (Exception e) {
+    try {
+        System.out.println("\n========================================");
+        System.out.println("=== CREANDO ZONA - INICIO ===");
+        System.out.println("========================================");
+        System.out.println("📥 Datos recibidos completos:");
+        zonaData.forEach((key, value) -> 
+            System.out.println("   " + key + " = " + value + " [" + (value != null ? value.getClass().getSimpleName() : "null") + "]")
+        );
+        
+        // Validar campos requeridos
+        String id = (String) zonaData.get("id");
+        String nombre = (String) zonaData.get("nombre");
+        String nivelUrgenciaStr = (String) zonaData.get("nivelUrgencia");
+        
+        if (id == null || id.trim().isEmpty()) {
+            System.out.println("❌ ERROR: ID faltante o vacío");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
+                .body(Map.of("success", false, "message", "El campo 'id' es requerido"));
         }
+        
+        if (nombre == null || nombre.trim().isEmpty()) {
+            System.out.println("❌ ERROR: Nombre faltante o vacío");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "message", "El campo 'nombre' es requerido"));
+        }
+        
+        if (nivelUrgenciaStr == null || nivelUrgenciaStr.trim().isEmpty()) {
+            System.out.println("❌ ERROR: Nivel de urgencia faltante");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "message", "El campo 'nivelUrgencia' es requerido"));
+        }
+        
+        // Parsear nivel de urgencia
+        NivelUrgencia nivelUrgencia;
+        try {
+            nivelUrgencia = NivelUrgencia.valueOf(nivelUrgenciaStr.toUpperCase());
+            System.out.println("✅ Nivel de urgencia parseado: " + nivelUrgencia + " (valor: " + nivelUrgencia.getValor() + ")");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ ERROR: Nivel de urgencia inválido: " + nivelUrgenciaStr);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "message", "Nivel de urgencia inválido: " + nivelUrgenciaStr + ". Valores permitidos: BAJA, MEDIA, ALTA, CRITICA"));
+        }
+        
+        // Crear zona con el nivel correcto
+        Zona zona = new Zona(id, nombre, nivelUrgencia);
+        System.out.println("✅ Zona instanciada:");
+        System.out.println("   ID: " + zona.getId());
+        System.out.println("   Nombre: " + zona.getNombre());
+        System.out.println("   Nivel: " + zona.getNivelUrgencia() + " [" + zona.getNivelUrgencia().name() + "]");
+        
+        // Establecer descripción
+        if (zonaData.containsKey("descripcion")) {
+            String desc = (String) zonaData.get("descripcion");
+            zona.setDescripcion(desc);
+            System.out.println("✅ Descripción: " + desc);
+        }
+        
+        // Establecer coordenadas
+        if (zonaData.containsKey("coordenadaX")) {
+            double x = ((Number) zonaData.get("coordenadaX")).doubleValue();
+            zona.setCoordenadaX(x);
+            System.out.println("✅ CoordenadaX: " + x);
+        }
+        
+        if (zonaData.containsKey("coordenadaY")) {
+            double y = ((Number) zonaData.get("coordenadaY")).doubleValue();
+            zona.setCoordenadaY(y);
+            System.out.println("✅ CoordenadaY: " + y);
+        }
+        
+        // Establecer población
+        if (zonaData.containsKey("poblacionAfectada")) {
+            int poblacion = ((Number) zonaData.get("poblacionAfectada")).intValue();
+            zona.setPoblacionAfectada(poblacion);
+            System.out.println("✅ Población: " + poblacion);
+            System.out.println("   Nivel después de población: " + zona.getNivelUrgencia() + " [NO debe cambiar]");
+        }
+        
+        // CRÍTICO: Establecer el radio
+        if (zonaData.containsKey("radio")) {
+            Object radioObj = zonaData.get("radio");
+            int radio;
+            
+            if (radioObj instanceof Number) {
+                radio = ((Number) radioObj).intValue();
+            } else if (radioObj instanceof String) {
+                radio = Integer.parseInt((String) radioObj);
+            } else {
+                System.out.println("⚠️ Radio tiene tipo inesperado: " + radioObj.getClass());
+                radio = 500;
+            }
+            
+            zona.setRadio(radio);
+            System.out.println("✅ Radio configurado: " + radio + " metros");
+            System.out.println("   Radio en zona: " + zona.getRadio() + " metros");
+        } else {
+            System.out.println("⚠️ Campo 'radio' no encontrado en request, usando default: " + zona.getRadio() + " metros");
+        }
+        
+        // Resumen final
+        System.out.println("\n=== RESUMEN ZONA ANTES DE GUARDAR ===");
+        System.out.println("ID: " + zona.getId());
+        System.out.println("Nombre: " + zona.getNombre());
+        System.out.println("Nivel Urgencia: " + zona.getNivelUrgencia().name() + " (" + zona.getNivelUrgencia().getDescripcion() + ")");
+        System.out.println("Coordenadas: (" + zona.getCoordenadaX() + ", " + zona.getCoordenadaY() + ")");
+        System.out.println("Población: " + zona.getPoblacionAfectada());
+        System.out.println("Radio: " + zona.getRadio() + " metros");
+        System.out.println("Activa: " + zona.isActiva());
+        System.out.println("======================================\n");
+        
+        // Agregar al sistema
+        boolean agregada = sistema.agregarZona(zona);
+        
+        if (agregada) {
+            System.out.println("✅ Zona agregada exitosamente al sistema");
+            System.out.println("========================================\n");
+            
+            // Respuesta con todos los datos
+            return ResponseEntity.ok(Map.of(
+                "success", true, 
+                "message", "Zona creada exitosamente",
+                "zona", Map.of(
+                    "id", zona.getId(),
+                    "nombre", zona.getNombre(),
+                    "nivelUrgencia", zona.getNivelUrgencia().name(),
+                    "nivelUrgenciaDescripcion", zona.getNivelUrgencia().getDescripcion(),
+                    "radio", zona.getRadio(),
+                    "coordenadaX", zona.getCoordenadaX(),
+                    "coordenadaY", zona.getCoordenadaY(),
+                    "poblacionAfectada", zona.getPoblacionAfectada(),
+                    "descripcion", zona.getDescripcion(),
+                    "color", zona.getNivelUrgencia().getColor()
+                )
+            ));
+        } else {
+            System.out.println("❌ No se pudo agregar la zona al sistema (posible ID duplicado)");
+            System.out.println("========================================\n");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("success", false, "message", "La zona con ID '" + id + "' ya existe en el sistema"));
+        }
+        
+    } catch (Exception e) {
+        System.err.println("❌❌❌ ERROR CRÍTICO creando zona ❌❌❌");
+        System.err.println("Mensaje: " + e.getMessage());
+        System.err.println("Tipo: " + e.getClass().getName());
+        e.printStackTrace();
+        System.err.println("========================================\n");
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of(
+                "success", false, 
+                "message", "Error interno del servidor: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
     }
+}
 
     // ============ ENDPOINTS DE RECURSOS ============
 

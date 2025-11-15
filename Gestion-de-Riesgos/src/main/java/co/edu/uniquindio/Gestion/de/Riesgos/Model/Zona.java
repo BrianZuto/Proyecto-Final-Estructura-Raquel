@@ -43,6 +43,8 @@ public class Zona {
     
     /**
      * Actualiza el nivel de riesgo basado en la población afectada
+     * NOTA: Este método NO se llama automáticamente desde setPoblacionAfectada
+     * para respetar el nivel establecido por el usuario
      */
     public void actualizarNivelRiesgo() {
         if (poblacionAfectada > 5000) {
@@ -68,6 +70,8 @@ public class Zona {
         
         return prioridad;
     }
+    
+    // ==================== GETTERS Y SETTERS ====================
     
     public String getId() {
         return id;
@@ -135,10 +139,12 @@ public class Zona {
         return poblacionAfectada;
     }
     
+    /**
+     * IMPORTANTE: NO llama a actualizarNivelRiesgo() automáticamente
+     * para respetar el nivel de urgencia establecido por el usuario
+     */
     public void setPoblacionAfectada(int poblacionAfectada) {
         this.poblacionAfectada = Math.max(0, poblacionAfectada);
-        // NO actualizar automáticamente el nivel de riesgo
-        // para respetar el nivel establecido por el usuario
     }
     
     public boolean isActiva() {
@@ -173,6 +179,6 @@ public class Zona {
     @Override
     public String toString() {
         return String.format("Zona{id='%s', nombre='%s', nivelRiesgo=%s, poblacionAfectada=%d, radio=%dm}", 
-            id, nombre, nivelRiesgo.getDescripcion(), poblacionAfectada, radio);
+            id, nombre, nivelRiesgo.name(), poblacionAfectada, radio);
     }
 }
