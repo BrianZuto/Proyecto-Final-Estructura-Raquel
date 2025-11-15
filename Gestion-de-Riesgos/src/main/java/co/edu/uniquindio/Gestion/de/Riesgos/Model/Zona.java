@@ -17,11 +17,13 @@ public class Zona {
     private double coordenadaY;
     private int poblacionAfectada;
     private boolean activa;
+    private int radio; // Radio de cobertura en metros
     
     public Zona() {
         this.activa = true;
         this.poblacionAfectada = 0;
         this.nivelRiesgo = NivelUrgencia.BAJA;
+        this.radio = 500; // Radio por defecto: 500 metros
     }
     
     public Zona(String id, String nombre, NivelUrgencia nivelRiesgo) {
@@ -135,7 +137,8 @@ public class Zona {
     
     public void setPoblacionAfectada(int poblacionAfectada) {
         this.poblacionAfectada = Math.max(0, poblacionAfectada);
-        actualizarNivelRiesgo();
+        // NO actualizar automáticamente el nivel de riesgo
+        // para respetar el nivel establecido por el usuario
     }
     
     public boolean isActiva() {
@@ -144,6 +147,14 @@ public class Zona {
     
     public void setActiva(boolean activa) {
         this.activa = activa;
+    }
+    
+    public int getRadio() {
+        return radio;
+    }
+    
+    public void setRadio(int radio) {
+        this.radio = Math.max(100, Math.min(10000, radio)); // Entre 100m y 10km
     }
     
     @Override
@@ -161,6 +172,7 @@ public class Zona {
     
     @Override
     public String toString() {
-        return String.format("Zona{id='%s', nombre='%s', nivelRiesgo=%s, poblacionAfectada=%d}", id, nombre, nivelRiesgo.getDescripcion(), poblacionAfectada);
+        return String.format("Zona{id='%s', nombre='%s', nivelRiesgo=%s, poblacionAfectada=%d, radio=%dm}", 
+            id, nombre, nivelRiesgo.getDescripcion(), poblacionAfectada, radio);
     }
 }

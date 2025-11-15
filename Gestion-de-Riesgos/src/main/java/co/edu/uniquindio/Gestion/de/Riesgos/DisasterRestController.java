@@ -147,27 +147,42 @@ public class DisasterRestController {
 
     // ============ ENDPOINTS DE ZONAS ============
 
+    // Fragmento del método obtenerZonas en DisasterRestController.java
+
+    // Fragmento del método obtenerZonas en DisasterRestController.java
+
     @GetMapping("/zonas")
     public ResponseEntity<List<Map<String, Object>>> obtenerZonas() {
-        List<Map<String, Object>> zonasData = sistema.getZonas().stream()
-                .map(zona -> {
-                    Map<String, Object> zonaMap = new HashMap<>();
-                    zonaMap.put("id", zona.getId());
-                    zonaMap.put("nombre", zona.getNombre());
-                    zonaMap.put("descripcion", zona.getDescripcion());
-                    zonaMap.put("coordenadaX", zona.getCoordenadaX());
-                    zonaMap.put("coordenadaY", zona.getCoordenadaY());
-                    zonaMap.put("poblacionAfectada", zona.getPoblacionAfectada());
-                    zonaMap.put("nivelUrgencia", zona.getNivelUrgencia().getDescripcion());
-                    zonaMap.put("nivelUrgenciaValor", zona.getNivelUrgencia().getValor());
-                    zonaMap.put("color", zona.getNivelUrgencia().getColor());
-                    zonaMap.put("activa", zona.isActiva());
-                    return zonaMap;
-                })
-                .collect(Collectors.toList());
+    List<Map<String, Object>> zonasData = sistema.getZonas().stream()
+        .map(zona -> {
+            Map<String, Object> zonaMap = new HashMap<>();
+            zonaMap.put("id", zona.getId());
+            zonaMap.put("nombre", zona.getNombre());
+            zonaMap.put("descripcion", zona.getDescripcion());
+            zonaMap.put("coordenadaX", zona.getCoordenadaX());
+            zonaMap.put("coordenadaY", zona.getCoordenadaY());
+            zonaMap.put("poblacionAfectada", zona.getPoblacionAfectada());
+            
+            // Devolver el nombre del enum (CRITICA, ALTA, etc)
+            zonaMap.put("nivelUrgencia", zona.getNivelUrgencia().name());
+            zonaMap.put("nivelUrgenciaDescripcion", zona.getNivelUrgencia().getDescripcion());
+            zonaMap.put("nivelUrgenciaValor", zona.getNivelUrgencia().getValor());
+            zonaMap.put("color", zona.getNivelUrgencia().getColor());
+            zonaMap.put("activa", zona.isActiva());
+            zonaMap.put("radio", zona.getRadio());
+            
+            System.out.println("📍 Zona: " + zona.getNombre() + 
+                " | Nivel: " + zona.getNivelUrgencia().name() + 
+                " | Color: " + zona.getNivelUrgencia().getColor() +
+                " | Radio: " + zona.getRadio() + "m");
+            
+            return zonaMap;
+        })
+        .collect(Collectors.toList());
 
-        return ResponseEntity.ok(zonasData);
-    }
+    System.out.println("✅ Total de zonas devueltas: " + zonasData.size());
+    return ResponseEntity.ok(zonasData);
+}
 
     @GetMapping("/zonas/{id}")
     public ResponseEntity<Map<String, Object>> obtenerZonaPorId(@PathVariable String id) {

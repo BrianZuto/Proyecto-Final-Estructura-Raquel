@@ -2039,8 +2039,12 @@ if (tabName === 'estadisticas') {
     }
 
     function createZoneOnMap(zona) {
-        const color = getColorByUrgency(zona.nivelUrgencia);
+        // Normalizar el nivel de urgencia
+        const nivelUrgencia = (zona.nivelUrgencia || zona.urgencia || 'BAJA').toUpperCase();
+        const color = getColorByUrgency(nivelUrgencia);
         const radius = zona.radio || 500; // Radio en metros
+
+        console.log('Creando zona:', zona.nombre, 'Nivel:', nivelUrgencia, 'Color:', color, 'Radio:', radius);
 
         // Crear círculo para la zona
         const circle = L.circle([zona.coordenadaX, zona.coordenadaY], {
@@ -2051,25 +2055,25 @@ if (tabName === 'estadisticas') {
             weight: 3
         }).addTo(map);
 
-        // Crear marcador en el centro
+        // Crear marcador en el centro con el color correcto
         const marker = L.marker([zona.coordenadaX, zona.coordenadaY], {
             icon: L.divIcon({
-                html: `<div style="background: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 12px; font-weight: bold;">${zona.nivelUrgencia.charAt(0)}</span></div>`,
+                html: `<div style="background: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 12px; font-weight: bold;">${nivelUrgencia.charAt(0)}</span></div>`,
                 className: '',
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
             })
         }).bindPopup(`
-            <b>${zona.nombre}</b><br>
+            <b>${zona.nombre || 'Sin nombre'}</b><br>
             ID: ${zona.id}<br>
-            Nivel: ${zona.nivelUrgencia}<br>
-            Población: ${zona.poblacionAfectada}<br>
+            Nivel: ${nivelUrgencia}<br>
+            Población: ${zona.poblacionAfectada || 0}<br>
             Radio: ${radius} metros
         `).addTo(map);
 
         zoneCircles.push({ circle, marker, zona });
     }
-
+    
     function getColorByUrgency(urgency) {
         switch(urgency) {
             case 'CRITICA': return '#F44336';
