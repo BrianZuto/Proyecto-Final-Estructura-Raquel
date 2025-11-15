@@ -968,6 +968,31 @@
     }
 }
 
+/* Ajustes para tamaño de gráficas (estadísticas) - CENTRAR y limitar ancho */
+.section-container {
+    /* ...existing styles... */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* centra el contenido (título ya dentro) */
+    gap: 12px;
+}
+
+.section-container canvas {
+    max-width: 600px;   /* ancho máximo razonable */
+    width: 100%;
+    height: auto;       /* dejar que Chart.js ajuste la altura según aspectRatio */
+    display: block;
+    margin: 0 auto;
+}
+
+/* mantener también reglas responsive si quieres tamaños menores */
+@media (max-width: 768px) {
+    .section-container canvas { max-width: 480px; }
+}
+@media (max-width: 480px) {
+    .section-container canvas { max-width: 360px; }
+}
+
     </style>
 </head>
 <body>
@@ -1223,26 +1248,473 @@
             <!-- ============================================ -->
             <!-- PESTAÑA: PANEL DE ADMINISTRACIÓN (Placeholder) -->
             <!-- ============================================ -->
-            <div id="admin-tab" class="tab-content">
-                <div class="container">
-                    <h1><i class="fas fa-tools"></i> Panel de Administración</h1>
-                    <p>Funcionalidad en desarrollo...</p>
+<div id="admin-tab" class="tab-content">
+    <div class="container">
+        <div class="welcome-section">
+            <h1><i class="fas fa-tools"></i> Panel de Administración</h1>
+            <p class="subtitle">Gestión completa del sistema de desastres</p>
+        </div>
+
+        <!-- Sistema de pestañas interno -->
+        <div class="tabs-header" style="margin-bottom: 20px;">
+            <button class="tab-button active" onclick="switchAdminTab('gestion-zonas')">Zonas</button>
+            <button class="tab-button" onclick="switchAdminTab('gestion-recursos')">Recursos</button>
+            <button class="tab-button" onclick="switchAdminTab('gestion-equipos')">Equipos</button>
+            <button class="tab-button" onclick="switchAdminTab('gestion-usuarios')">Usuarios</button>
+            <button class="tab-button" onclick="switchAdminTab('asignacion-recursos')">Asignación</button>
+        </div>
+
+        <!-- Gestión de Zonas -->
+        <div id="gestion-zonas" class="admin-tab-content active">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-map-marker-alt"></i> Crear Nueva Zona</h2>
                 </div>
+                <form id="createZoneFormAdmin" class="two-column">
+                    <div class="input-group">
+                        <label>ID de la Zona *</label>
+                        <input type="text" id="adminZoneId" required placeholder="ej. Z004">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="adminZoneName" required placeholder="ej. Zona Centro">
+                    </div>
+                    <div class="input-group">
+                        <label>Descripción</label>
+                        <textarea id="adminZoneDesc" placeholder="Descripción de la zona" rows="3"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Coordenada X (Latitud) *</label>
+                        <input type="number" step="any" id="adminZoneX" required placeholder="4.5389">
+                    </div>
+                    <div class="input-group">
+                        <label>Coordenada Y (Longitud) *</label>
+                        <input type="number" step="any" id="adminZoneY" required placeholder="-75.6678">
+                    </div>
+                    <div class="input-group">
+                        <label>Población Afectada</label>
+                        <input type="number" id="adminZonePop" value="0" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Nivel de Urgencia *</label>
+                        <select id="adminZoneUrgency" required>
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="CRITICA">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-plus-circle"></i> Crear Zona
+                        </button>
+                    </div>
+                </form>
             </div>
 
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Zonas Existentes</h2>
+                    <button class="btn-refresh" onclick="loadZonas()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div id="zonasList" class="zones-grid">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando zonas...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestión de Recursos -->
+        <div id="gestion-recursos" class="admin-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-boxes"></i> Crear Nuevo Recurso</h2>
+                </div>
+                <form id="createResourceForm" class="two-column">
+                    <div class="input-group">
+                        <label>ID del Recurso *</label>
+                        <input type="text" id="resourceId" required placeholder="ej. R004">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="resourceName" required placeholder="ej. Agua Potable">
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo *</label>
+                        <select id="resourceType" required>
+                            <option value="ALIMENTOS">Alimentos</option>
+                            <option value="MEDICINAS">Medicinas</option>
+                            <option value="EQUIPOS">Equipos</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Cantidad *</label>
+                        <input type="number" id="resourceQuantity" required min="1" value="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Unidad de Medida *</label>
+                        <input type="text" id="resourceUnit" required placeholder="litros, kg, unidades...">
+                    </div>
+                    <div class="input-group">
+                        <label>Ubicación (ID Zona)</label>
+                        <input type="text" id="resourceLocation" placeholder="Z001">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-plus-circle"></i> Crear Recurso
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-warehouse"></i> Recursos Existentes</h2>
+                    <button class="btn-refresh" onclick="loadRecursos()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div id="recursosList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestión de Equipos -->
+        <div id="gestion-equipos" class="admin-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Crear Nuevo Equipo</h2>
+                </div>
+                <form id="createTeamForm" class="two-column">
+                    <div class="input-group">
+                        <label>ID del Equipo *</label>
+                        <input type="text" id="teamId" required placeholder="ej. EQ003">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="teamName" required placeholder="ej. Equipo Médico Beta">
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo *</label>
+                        <select id="teamType" required>
+                            <option value="MEDICO">Equipo Médico</option>
+                            <option value="BOMBEROS">Bomberos</option>
+                            <option value="BUSQUEDA_RESCATE">Búsqueda y Rescate</option>
+                            <option value="EVACUACION">Evacuación</option>
+                            <option value="COMUNICACIONES">Comunicaciones</option>
+                            <option value="LOGISTICA">Logística</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Ubicación Actual *</label>
+                        <input type="text" id="teamLocation" required placeholder="Z001">
+                    </div>
+                    <div class="input-group">
+                        <label>Capacidad Máxima *</label>
+                        <input type="number" id="teamCapacity" required min="1" value="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Líder del Equipo *</label>
+                        <input type="text" id="teamLeader" required placeholder="Nombre del líder">
+                    </div>
+                    <div class="input-group">
+                        <label>Personal Asignado</label>
+                        <input type="number" id="teamPersonnel" min="0" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Especialidad</label>
+                        <input type="text" id="teamSpecialty" placeholder="Especialidad del equipo">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-plus-circle"></i> Crear Equipo
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-shield"></i> Equipos Existentes</h2>
+                    <button class="btn-refresh" onclick="loadEquipos()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div id="equiposList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando equipos...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestión de Usuarios -->
+        <div id="gestion-usuarios" class="admin-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-cog"></i> Gestión de Usuarios</h2>
+                </div>
+                <div id="usersList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Asignación de Recursos -->
+        <div id="asignacion-recursos" class="admin-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-tasks"></i> Asignación Visual de Recursos</h2>
+                </div>
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>Seleccionar Zona</label>
+                        <select id="assignZoneSelect" onchange="loadZoneResources()">
+                            <option value="">Selecciona una zona</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Seleccionar Recurso</label>
+                        <select id="assignResourceSelect">
+                            <option value="">Selecciona un recurso</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Cantidad a Asignar</label>
+                    <input type="number" id="assignQuantity" min="1" value="1">
+                </div>
+                <button class="btn-primary" onclick="assignResourceToZone()">
+                    <i class="fas fa-link"></i> Asignar Recurso a Zona
+                </button>
+
+                <div id="zoneResourcesInfo" style="margin-top: 20px; display: none;">
+                    <h3>Recursos Asignados a la Zona</h3>
+                    <div id="assignedResourcesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <!-- ============================================ -->
             <!-- PESTAÑA: PANEL DE RUTAS (Placeholder) -->
             <!-- ============================================ -->
-            <div id="rutas-tab" class="tab-content">
-                <div class="container">
-                    <h1><i class="fas fa-route"></i> Panel de Rutas</h1>
-                    <p>Funcionalidad en desarrollo...</p>
+<div id="rutas-tab" class="tab-content">
+    <div class="container">
+        <div class="welcome-section">
+            <h1><i class="fas fa-route"></i> Panel de Rutas y Evacuaciones</h1>
+            <p class="subtitle">Planificación y gestión de rutas de evacuación</p>
+        </div>
+
+        <!-- Sistema de pestañas interno -->
+        <div class="tabs-header" style="margin-bottom: 20px;">
+            <button class="tab-button active" onclick="switchRoutesTab('crear-rutas')">Crear Rutas</button>
+            <button class="tab-button" onclick="switchRoutesTab('ver-rutas')">Todas las Rutas</button>
+            <button class="tab-button" onclick="switchRoutesTab('planificar-evacuacion')">Planificar Evacuación</button>
+            <button class="tab-button" onclick="switchRoutesTab('rutas-optimas')">Rutas Óptimas</button>
+        </div>
+
+        <!-- Crear Rutas Manualmente -->
+        <div id="crear-rutas" class="routes-tab-content active">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Crear Ruta Manualmente</h2>
+                </div>
+                <form id="createRouteForm" class="two-column">
+                    <div class="input-group">
+                        <label>ID de la Ruta *</label>
+                        <input type="text" id="routeId" required placeholder="ej. R004">
+                    </div>
+                    <div class="input-group">
+                        <label>Zona Origen *</label>
+                        <select id="routeOrigin" required>
+                            <option value="">Selecciona zona origen</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Zona Destino *</label>
+                        <select id="routeDestination" required>
+                            <option value="">Selecciona zona destino</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Distancia (km) *</label>
+                        <input type="number" id="routeDistance" required min="0.1" step="0.1" placeholder="15.5">
+                    </div>
+                    <div class="input-group">
+                        <label>Tiempo Estimado (horas) *</label>
+                        <input type="number" id="routeTime" required min="0.1" step="0.1" placeholder="0.8">
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo de Ruta *</label>
+                        <select id="routeType" required>
+                            <option value="TERRESTRE">Terrestre</option>
+                            <option value="AEREA">Aérea</option>
+                            <option value="MARITIMA">Marítima</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Capacidad Máxima</label>
+                        <input type="number" id="routeCapacity" min="1" value="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Nivel de Riesgo (0-1)</label>
+                        <input type="number" id="routeRisk" min="0" max="1" step="0.1" value="0.1">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-road"></i> Crear Ruta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ver Todas las Rutas -->
+        <div id="ver-rutas" class="routes-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Todas las Rutas del Sistema</h2>
+                    <button class="btn-refresh" onclick="loadAllRoutes()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div id="routesList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando rutas...
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- ============================================ -->
-            <!-- PESTAÑA: ESTADÍSTICAS (Placeholder) -->
-            <!-- ============================================ -->
+        <!-- Planificar Evacuación -->
+        <div id="planificar-evacuacion" class="routes-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-ambulance"></i> Planificar Nueva Evacuación</h2>
+                </div>
+                <form id="planEvacuationForm" class="two-column">
+                    <div class="input-group">
+                        <label>ID de Evacuación *</label>
+                        <input type="text" id="evacId" required placeholder="ej. EV001">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="evacName" required placeholder="ej. Evacuación Centro">
+                    </div>
+                    <div class="input-group">
+                        <label>Zona Origen *</label>
+                        <select id="evacOrigin" required onchange="updateEvacuationRoutes()">
+                            <option value="">Selecciona zona origen</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Zona Destino *</label>
+                        <select id="evacDestination" required onchange="updateEvacuationRoutes()">
+                            <option value="">Selecciona zona destino</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Ruta Recomendada</label>
+                        <select id="evacRoute">
+                            <option value="">Se calculará automáticamente</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Personas a Evacuar *</label>
+                        <input type="number" id="evacPeople" required min="1" value="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Nivel de Urgencia *</label>
+                        <select id="evacUrgency" required>
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="CRITICA">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Responsable</label>
+                        <input type="text" id="evacResponsible" placeholder="Nombre del responsable">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-play-circle"></i> Planificar Evacuación
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Evacuaciones Planificadas</h2>
+                    <button class="btn-refresh" onclick="loadEvacuaciones()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div id="evacuacionesList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando evacuaciones...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rutas Óptimas -->
+        <div id="rutas-optimas" class="routes-tab-content">
+            <div class="section-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-route"></i> Cálculo de Rutas Óptimas</h2>
+                </div>
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>Zona Origen *</label>
+                        <select id="optimalOrigin" required onchange="calculateOptimalRoutes()">
+                            <option value="">Selecciona origen</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Zona Destino *</label>
+                        <select id="optimalDestination" required onchange="calculateOptimalRoutes()">
+                            <option value="">Selecciona destino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="optimalRoutesResults" style="display: none;">
+                    <h3>Resultados de Rutas Óptimas</h3>
+                    
+                    <div class="route-option">
+                        <h4><i class="fas fa-route"></i> Ruta Más Corta (Distancia)</h4>
+                        <div id="shortestRouteInfo"></div>
+                    </div>
+
+                    <div class="route-option">
+                        <h4><i class="fas fa-bolt"></i> Ruta Más Rápida (Tiempo)</h4>
+                        <div id="fastestRouteInfo"></div>
+                    </div>
+
+                    <div class="route-option">
+                        <h4><i class="fas fa-shield-alt"></i> Ruta Más Segura</h4>
+                        <div id="safestRouteInfo"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PESTAÑA: ESTADÍSTICAS (Gráficas Funcionales) -->
+<!-- ============================================ -->
 <div id="estadisticas-tab" class="tab-content">
     <div class="container">
         <div class="welcome-section">
@@ -1256,7 +1728,7 @@
         <!-- Resumen numérico rápido -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg,#667eea,#764ba2);">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#667eea,#764ba2);">
                     <i class="fas fa-map-marker-alt"></i>
                 </div>
                 <div class="stat-info">
@@ -1266,7 +1738,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg,#f093fb,#f5576c);">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#f093fb,#f5576c);">
                     <i class="fas fa-boxes"></i>
                 </div>
                 <div class="stat-info">
@@ -1276,7 +1748,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg,#4facfe,#00f2fe);">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#4facfe,#00f2fe);">
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-info">
@@ -1286,7 +1758,84 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg,#43e97b,#38f9d7);">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#43e97b,#38f9d7);">
+                    <i class="fas fa-ambulance"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalEvacuaciones">0</div>
+                    <div class="stat-label">Evacuaciones planificadas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica: Zonas por nivel de urgencia -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Zonas por nivel de urgencia</h2>
+            </div>
+            <canvas id="chartZonasUrgencia" height="120"></canvas>
+        </div>
+
+        <!-- Gráfica: Recursos por tipo -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-warehouse"></i> Recursos por tipo</h2>
+            </div>
+            <canvas id="chartRecursosTipo" height="120"></canvas>
+        </div>
+
+        <!-- Gráfica: Equipos por estado -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-user-shield"></i> Equipos por estado</h2>
+            </div>
+            <canvas id="chartEquiposEstado" height="120"></canvas>
+        </div>
+
+        <!-- Gráfica adicional: Progreso de Evacuaciones -->
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="fas fa-ambulance"></i> Progreso de Evacuaciones</h2>
+            </div>
+            <canvas id="chartEvacuacionesProgreso" height="120"></canvas>
+        </div>
+    </div>
+</div>
+
+        <!-- Resumen numérico rápido -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(45deg,#667eea,#764ba2);">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalZonas">0</div>
+                    <div class="stat-label">Zonas registradas</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#f093fb,#f5576c);">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalRecursos">0</div>
+                    <div class="stat-label">Recursos totales</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#4facfe,#00f2fe);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="statsTotalEquipos">0</div>
+                    <div class="stat-label">Equipos de rescate</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(100deg,#43e97b,#38f9d7);">
                     <i class="fas fa-ambulance"></i>
                 </div>
                 <div class="stat-info">
@@ -1678,6 +2227,284 @@ if (tabName === 'estadisticas') {
     loadEstadisticasTab();
 }
 
+async function loadEstadisticasTab() {
+    try {
+        const response = await fetch(`${API_URL}/estadisticas`);
+        const stats = await response.json();
+
+        // Actualizar los totales en las tarjetas
+        document.getElementById('statsTotalZonas').textContent = stats.totalZonas || 0;
+        document.getElementById('statsTotalRecursos').textContent = stats.totalRecursos || 0;
+        document.getElementById('statsTotalEquipos').textContent = stats.totalEquipos || 0;
+        document.getElementById('statsTotalEvacuaciones').textContent = stats.totalEvacuaciones || 0;
+
+        // Renderizar gráficas
+        renderCharts(stats);
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+    }
+}
+// Función para renderizar todas las gráficas
+function renderCharts(stats) {
+    // Destruir gráficas existentes si las hay
+    destroyCharts();
+
+    // Gráfica de Zonas por Urgencia
+    if (stats.zonasPorUrgencia) {
+        renderZonasChart(stats.zonasPorUrgencia);
+    }
+
+    // Gráfica de Recursos por Tipo
+    if (stats.recursosPorTipo) {
+        renderRecursosChart(stats.recursosPorTipo);
+    }
+
+    // Gráfica de Equipos por Estado
+    if (stats.equiposPorEstado) {
+        renderEquiposChart(stats.equiposPorEstado);
+    }
+
+    // Gráfica de Progreso de Evacuaciones
+    if (stats.porcentajeEvacuacionesCompletadas !== undefined) {
+        renderEvacuacionesChart(stats);
+    }
+}
+
+function destroyCharts() {
+    // Destruir instancias anteriores de Chart.js
+    if (window.zonasChart) window.zonasChart.destroy();
+    if (window.recursosChart) window.recursosChart.destroy();
+    if (window.equiposChart) window.equiposChart.destroy();
+    if (window.evacuacionesChart) window.evacuacionesChart.destroy();
+}
+
+function renderZonasChart(zonasPorUrgencia) {
+    const ctx = document.getElementById('chartZonasUrgencia').getContext('2d');
+    const labels = Object.keys(zonasPorUrgencia);
+    const data = Object.values(zonasPorUrgencia);
+    
+    // Colores basados en el nivel de urgencia
+    const backgroundColors = labels.map(label => {
+        switch(label.toUpperCase()) {
+            case 'CRÍTICA': return '#F44336';
+            case 'ALTA': return '#FF9800';
+            case 'MEDIA': return '#FFC107';
+            case 'BAJA': return '#4CAF50';
+            default: return '#9E9E9E';
+        }
+    });
+
+    window.zonasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Zonas por Nivel de Urgencia',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(color => color),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.parsed.y} zonas`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Zonas'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Nivel de Urgencia'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderRecursosChart(recursosPorTipo) {
+    const ctx = document.getElementById('chartRecursosTipo').getContext('2d');
+    const labels = Object.keys(recursosPorTipo);
+    const data = Object.values(recursosPorTipo);
+    
+    window.recursosChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                    '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderEquiposChart(equiposPorEstado) {
+    const ctx = document.getElementById('chartEquiposEstado').getContext('2d');
+    const labels = Object.keys(equiposPorEstado);
+    const data = Object.values(equiposPorEstado);
+    
+    window.equiposChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#4CAF50', // Disponible
+                    '#2196F3', // En tránsito
+                    '#FF9800', // En operación
+                    '#9C27B0', // En descanso
+                    '#607D8B', // Mantenimiento
+                    '#F44336'  // No disponible
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderEvacuacionesChart(stats) {
+    const ctx = document.getElementById('chartEvacuacionesProgreso').getContext('2d');
+    const completadas = stats.porcentajeEvacuacionesCompletadas || 0;
+    const pendientes = 100 - completadas;
+
+    window.evacuacionesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completadas', 'Pendientes'],
+            datasets: [{
+                data: [completadas, pendientes],
+                backgroundColor: ['#4CAF50', '#FFC107'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.parsed}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Función para mostrar notificaciones (si no la tienes)
+function showNotification(message, type = 'info') {
+    // Si ya tienes esta función, no la dupliques
+    if (typeof window.showNotification === 'function') return;
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle"></i>
+        ${message}
+    `;
+    
+    // Agregar estilos si no existen
+    if (!document.querySelector('#notification-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'notification-styles';
+        styles.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 6px;
+                color: white;
+                z-index: 10000;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            }
+            .notification.success { background: #4CAF50; }
+            .notification.error { background: #F44336; }
+            .notification.info { background: #2196F3; }
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
 }
     // ==========================================================
     //   CARGA DE DATOS PARA LA PESTAÑA INICIO
@@ -2039,12 +2866,8 @@ if (tabName === 'estadisticas') {
     }
 
     function createZoneOnMap(zona) {
-        // Normalizar el nivel de urgencia
-        const nivelUrgencia = (zona.nivelUrgencia || zona.urgencia || 'BAJA').toUpperCase();
-        const color = getColorByUrgency(nivelUrgencia);
+        const color = getColorByUrgency(zona.nivelUrgencia);
         const radius = zona.radio || 500; // Radio en metros
-
-        console.log('Creando zona:', zona.nombre, 'Nivel:', nivelUrgencia, 'Color:', color, 'Radio:', radius);
 
         // Crear círculo para la zona
         const circle = L.circle([zona.coordenadaX, zona.coordenadaY], {
@@ -2055,25 +2878,25 @@ if (tabName === 'estadisticas') {
             weight: 3
         }).addTo(map);
 
-        // Crear marcador en el centro con el color correcto
+        // Crear marcador en el centro
         const marker = L.marker([zona.coordenadaX, zona.coordenadaY], {
             icon: L.divIcon({
-                html: `<div style="background: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 12px; font-weight: bold;">${nivelUrgencia.charAt(0)}</span></div>`,
+                html: `<div style="background: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 12px; font-weight: bold;">${zona.nivelUrgencia.charAt(0)}</span></div>`,
                 className: '',
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
             })
         }).bindPopup(`
-            <b>${zona.nombre || 'Sin nombre'}</b><br>
+            <b>${zona.nombre}</b><br>
             ID: ${zona.id}<br>
-            Nivel: ${nivelUrgencia}<br>
-            Población: ${zona.poblacionAfectada || 0}<br>
+            Nivel: ${zona.nivelUrgencia}<br>
+            Población: ${zona.poblacionAfectada}<br>
             Radio: ${radius} metros
         `).addTo(map);
 
         zoneCircles.push({ circle, marker, zona });
     }
-    
+
     function getColorByUrgency(urgency) {
         switch(urgency) {
             case 'CRITICA': return '#F44336';
@@ -2412,7 +3235,6 @@ if (tabName === 'estadisticas') {
 function showMap() {
     switchTab('mapa');
 }
-
 
     function logout() {
         if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
