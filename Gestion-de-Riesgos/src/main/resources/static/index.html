@@ -1448,6 +1448,10 @@
                         <input type="text" id="adminZoneId" required placeholder="ej. Z004">
                     </div>
                     <div class="input-group">
+        <label>Radio de Cobertura (metros)</label>
+        <input type="number" id="adminZoneRadius" value="500" min="100" max="5000">
+    </div>
+                    <div class="input-group">
                         <label>Nombre *</label>
                         <input type="text" id="adminZoneName" required placeholder="ej. Zona Centro">
                     </div>
@@ -2550,6 +2554,11 @@ async function loadEstadisticasTab() {
     console.log("Cargando estadísticas del sistema…");
 
     try {
+        // 1. Obtener datos
+        const resp = await fetch(`${API_URL}/estadisticas`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const stats = await resp.json();
 
         // ============================================
         // 1. ACTUALIZAR TARJETAS DEL RESUMEN NUMÉRICO
@@ -4144,7 +4153,9 @@ function showMap() {
 
     // --- PANEL DE ESTADÍSTICAS ---
     if (tabName === 'estadisticas') {
-        loadEstadisticasTab();
+        setTimeout(() => {
+            loadEstadisticasTab();
+        }, 100);
     }
 
     // --- ÁRBOL D3 ---
@@ -4159,23 +4170,21 @@ function showMap() {
     }
 
     // --- PANEL DE ADMINISTRACIÓN ---
-if (tabName === 'admin') {
-    // 1. Cargar toda la información desde la API
-    loadAdminData();
-
+    if (tabName === 'admin') {
+        setTimeout(() => loadAdminData(), 100);
+    }
     // 2. Seleccionar automáticamente la pestaña "Zonas"
     switchAdminTab('gestion-zonas');
-}
 
     // --- PANEL DE RUTAS ---
     // Aquí eliges la subpestaña por defecto del panel de rutas
-    if (tabName === 'rutas') {
-        // Ajusta el ID según tu HTML: por ejemplo 'rutas-general'
-        switchRoutesTab('rutas-general');
-        switchRoutesTab('rutas-manual');
-        initRutasPanel();
-    }
+if (tabName === 'rutas') {
+    // Cargar la primera pestaña que SÍ existe
+    switchRoutesTab('crear-rutas');
+    setTimeout(() => initRutasPanel(), 100);
 }
+}
+
     //=========================================================
     // FUNCIONES ADMINISTRATIVAS
     //=========================================================
@@ -4774,6 +4783,8 @@ async function initRutasPanel() {
 async function loadZonasForRutas() {
     const selectOrigen  = document.getElementById('rutaZonaOrigen');
     const selectDestino = document.getElementById('rutaZonaDestino');
+    const evacOrigen = document.getElementById('evacOrigin');
+    const evacDestino = document.getElementById('evacDestination');
 
     if (!selectOrigen || !selectDestino) {
         console.warn('No se encontraron los selects #rutaZonaOrigen o #rutaZonaDestino');
@@ -4789,6 +4800,8 @@ async function loadZonasForRutas() {
         // Limpiar opciones actuales
         selectOrigen.innerHTML  = '<option value="">Selecciona zona origen</option>';
         selectDestino.innerHTML = '<option value="">Selecciona zona destino</option>';
+        if (evacOrigen) evacOrigen.innerHTML = '<option value="">Selecciona zona origen</option>';
+        if (evacDestino) evacDestino.innerHTML = '<option value="">Selecciona zona destino</option>';
 
         zonas.forEach(z => {
             const opt1 = document.createElement('option');
@@ -4800,6 +4813,20 @@ async function loadZonasForRutas() {
             opt2.value = z.id;
             opt2.textContent = z.nombre || z.id;
             selectDestino.appendChild(opt2);
+
+            if (evacOrigen) {
+            const opt3 = document.createElement('option');
+            opt3.value = z.id;
+            opt3.textContent = z.nombre || z.id;
+            evacOrigen.appendChild(opt3);
+            }
+
+            if (evacDestino) {
+                const opt4 = document.createElement('option');
+                opt4.value = z.id;
+                opt4.textContent = z.nombre || z.id;
+                evacDestino.appendChild(opt4);
+            }
         });
     } catch (err) {
         console.error('Error cargando zonas para rutas:', err);
@@ -4891,6 +4918,135 @@ async function loadRutasHistorial() {
     } catch (err) {
         console.error('Error cargando historial de rutas:', err);
         showNotification('No se pudo cargar el historial de rutas', 'error');
+    }
+}
+// PLANIFICAR EVACUACIÓN
+async function planificarEvacuacion(event) {
+    event.preventDefault();
+
+    const evacData = {
+        id: document.getElementById('evacId').value.trim(),
+        zonaOrigen: document.getElementById('evacOrigin').value,
+        zonaDestino: document.getElementById('evacDestination').value,
+        personasAEvacuar: parseInt(document.getElementById('evacPeople').value || '0', 10),
+        nivelUrgencia: document.getElementById('evacUrgency').value,
+        responsable: document.getElementById('evacResponsible').value.trim()
+    };
+
+    if (!evacData.id || !evacData.zonaOrigen || !evacData.zonaDestino) {
+        showNotification('Completa todos los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}/evacuaciones`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(evacData)
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (resp.ok) {
+            showNotification('Evacuación planificada exitosamente', 'success');
+            event.target.reset();
+            await loadEvacuaciones();
+        } else {
+            showNotification(result.message || 'No se pudo planificar', 'error');
+        }
+    } catch (err) {
+        console.error('Error planificando evacuación:', err);
+        showNotification('Error de conexión', 'error');
+    }
+}
+
+// CARGAR TODAS LAS RUTAS
+async function loadAllRoutes() {
+    const container = document.getElementById('routesList');
+    if (!container) return;
+
+    try {
+        const resp = await fetch(`${API_URL}/rutas`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const rutas = await resp.json();
+
+        if (!Array.isArray(rutas) || rutas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-route"></i>
+                    <h3>No hay rutas registradas</h3>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        rutas.forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'route-card';
+            card.innerHTML = `
+                <div class="route-header">
+                    <h4><i class="fas fa-route"></i> ${r.id}</h4>
+                    <span class="route-type">${r.tipo}</span>
+                </div>
+                <div class="route-info">
+                    <p><i class="fas fa-play"></i> <strong>Origen:</strong> ${r.origen?.nombre || r.origenId}</p>
+                    <p><i class="fas fa-flag-checkered"></i> <strong>Destino:</strong> ${r.destino?.nombre || r.destinoId}</p>
+                    <p><i class="fas fa-road"></i> <strong>Distancia:</strong> ${r.distancia} km</p>
+                    <p><i class="fas fa-clock"></i> <strong>Tiempo:</strong> ${r.tiempoEstimado} hrs</p>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Error cargando rutas:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error cargando rutas</h3>
+            </div>`;
+    }
+}
+
+// CARGAR EVACUACIONES
+async function loadEvacuaciones() {
+    const container = document.getElementById('evacuacionesList');
+    if (!container) return;
+
+    try {
+        const resp = await fetch(`${API_URL}/evacuaciones`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const evacuaciones = await resp.json();
+
+        if (!Array.isArray(evacuaciones) || evacuaciones.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-ambulance"></i>
+                    <h3>No hay evacuaciones planificadas</h3>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        evacuaciones.forEach(e => {
+            const card = document.createElement('div');
+            card.className = 'evacuation-card';
+            card.innerHTML = `
+                <div class="evacuation-header">
+                    <h4><i class="fas fa-ambulance"></i> ${e.nombre || e.id}</h4>
+                    <span class="urgency-badge urgency-${(e.nivelUrgencia || 'media').toLowerCase()}">${e.nivelUrgencia}</span>
+                </div>
+                <div class="evacuation-info">
+                    <p><strong>Personas a evacuar:</strong> ${e.personasAEvacuar}</p>
+                    <p><strong>Estado:</strong> ${e.estado}</p>
+                    <p><strong>Progreso:</strong> ${e.porcentajeCompletado || 0}%</p>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Error cargando evacuaciones:', err);
     }
 }
     //=========================================================
@@ -5192,7 +5348,6 @@ async function loadRutasHistorial() {
     }
 
     function renderCharts(stats) {
-        destroyCharts();
 
         if (stats.zonasPorUrgencia) {
             renderZonasChart(stats.zonasPorUrgencia);
@@ -5220,6 +5375,7 @@ async function loadRutasHistorial() {
 
     function renderZonasChart(zonasPorUrgencia) {
         const ctx = document.getElementById('chartZonasUrgencia').getContext('2d');
+        if (!ctx) return;
         const labels = Object.keys(zonasPorUrgencia);
         const data = Object.values(zonasPorUrgencia);
         
@@ -5295,6 +5451,7 @@ async function loadRutasHistorial() {
 
     function renderEquiposChart(equiposPorEstado) {
         const ctx = document.getElementById('chartEquiposEstado').getContext('2d');
+        if (!ctx) return;
         const labels = Object.keys(equiposPorEstado);
         const data = Object.values(equiposPorEstado);
         
@@ -5324,6 +5481,7 @@ async function loadRutasHistorial() {
 
     function renderEvacuacionesChart(stats) {
         const ctx = document.getElementById('chartEvacuacionesProgreso').getContext('2d');
+        if (!ctx) return;
         const completadas = stats.porcentajeEvacuacionesCompletadas || 0;
         const pendientes = 100 - completadas;
 
@@ -5413,7 +5571,258 @@ async function loadRutasHistorial() {
     if (teamForm) {
         teamForm.addEventListener('submit', handleAdminTeamSubmit);
     }
+    // ===== FORMULARIOS RUTAS =====
+    const routeForm = document.getElementById('createRouteForm');
+    const evacForm = document.getElementById('planEvacuationForm');
+
+    if (routeForm) {
+        routeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const routeData = {
+                id: document.getElementById('routeId').value,
+                origen: document.getElementById('routeOrigin').value,
+                destino: document.getElementById('routeDestination').value,
+                distancia: parseFloat(document.getElementById('routeDistance').value),
+                tiempoEstimado: parseFloat(document.getElementById('routeTime').value),
+                tipo: document.getElementById('routeType').value,
+                capacidadMaxima: parseInt(document.getElementById('routeCapacity').value),
+                nivelRiesgo: parseFloat(document.getElementById('routeRisk').value)
+            };
+
+        // Validación básica
+        if (!routeData.id || !routeData.origen || !routeData.destino) {
+            showNotification('Completa todos los campos obligatorios', 'error');
+            return;
+        }
+
+        try {
+            const resp = await fetch(`${API_URL}/rutas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(routeData)
+            });
+
+            const result = await resp.json().catch(() => ({}));
+
+            if (resp.ok && (result.success === undefined || result.success === true)) {
+                showNotification('Ruta creada exitosamente', 'success');
+                routeForm.reset();
+                loadAllRoutes();
+            } else {
+                console.error('Error al crear ruta:', result);
+                showNotification(result.message || 'No se pudo crear la ruta', 'error');
+            }
+        } catch (error) {
+            console.error('Error de conexión al crear ruta:', error);
+            showNotification('Error de conexión con la API', 'error');
+        }
+    });
+    }
+
+    if (evacForm) {
+        evacForm.addEventListener('submit', planificarEvacuacion);
+    }
 });
+// FUNCIONES HANDLER PARA ADMIN PANEL
+
+async function handleAdminZoneSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('adminZoneId').value.trim(),
+        nombre: document.getElementById('adminZoneName').value.trim(),
+        descripcion: document.getElementById('adminZoneDesc').value.trim(),
+        coordenadaX: parseFloat(document.getElementById('adminZoneX').value),
+        coordenadaY: parseFloat(document.getElementById('adminZoneY').value),
+        poblacionAfectada: parseInt(document.getElementById('adminZonePop').value || '0', 10),
+        nivelUrgencia: document.getElementById('adminZoneUrgency').value,
+        radio: parseInt(document.getElementById('adminZoneRadius')?.value || '500', 10)
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre de la zona son obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}/zonas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error creando zona:', result);
+            showNotification(result.message || 'No se pudo crear la zona', 'error');
+            return;
+        }
+
+        showNotification('Zona creada correctamente', 'success');
+        e.target.reset();
+        await loadAdminData(); // Recargar datos
+    } catch (err) {
+        console.error('Error al crear zona:', err);
+        showNotification('Error de conexión al crear la zona', 'error');
+    }
+}
+
+async function handleAdminResourceSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('resourceId').value.trim(),
+        nombre: document.getElementById('resourceName').value.trim(),
+        tipo: document.getElementById('resourceType').value,
+        cantidad: parseInt(document.getElementById('resourceQuantity').value || '0', 10),
+        unidadMedida: document.getElementById('resourceUnit').value.trim(),
+        ubicacionId: document.getElementById('resourceLocation').value.trim() || null
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre del recurso son obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}/recursos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error creando recurso:', result);
+            showNotification(result.message || 'No se pudo crear el recurso', 'error');
+            return;
+        }
+
+        showNotification('Recurso creado correctamente', 'success');
+        e.target.reset();
+        await loadAdminData();
+    } catch (err) {
+        console.error('Error al crear recurso:', err);
+        showNotification('Error de conexión al crear recurso', 'error');
+    }
+}
+
+async function handleAdminTeamSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('teamId').value.trim(),
+        nombre: document.getElementById('teamName').value.trim(),
+        tipo: document.getElementById('teamType').value,
+        ubicacionActual: document.getElementById('teamLocation').value.trim(),
+        capacidadMaxima: parseInt(document.getElementById('teamCapacity').value || '0', 10),
+        liderEquipo: document.getElementById('teamLeader').value.trim(),
+        personalAsignado: parseInt(document.getElementById('teamPersonnel').value || '0', 10),
+        experienciaAnos: parseInt(document.getElementById('teamExperience')?.value || '0', 10)
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre del equipo son obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}/equipos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error creando equipo:', result);
+            showNotification(result.message || 'No se pudo crear el equipo', 'error');
+            return;
+        }
+
+        showNotification('Equipo creado correctamente', 'success');
+        e.target.reset();
+        await loadAdminData();
+    } catch (err) {
+        console.error('Error al crear equipo:', err);
+        showNotification('Error de conexión al crear equipo', 'error');
+    }
+}
+
+// CARGAR DATOS DEL PANEL ADMIN
+async function loadAdminData() {
+    try {
+        const [zonasRes, recursosRes, equiposRes] = await Promise.all([
+            fetch(`${API_URL}/zonas`),
+            fetch(`${API_URL}/recursos`),
+            fetch(`${API_URL}/equipos`)
+        ]);
+
+        const zonas = await zonasRes.json();
+        const recursos = await recursosRes.json();
+        const equipos = await equiposRes.json();
+
+        // Renderizar listas (implementar según necesites)
+        renderZonasAdminTable(zonas);
+        renderRecursosAdminTable(recursos);
+        renderEquiposAdminTable(equipos);
+
+    } catch (error) {
+        console.error('Error cargando datos del panel:', error);
+    }
+}
+
+// FUNCIONES DE RENDERIZADO (EJEMPLO)
+function renderZonasAdminTable(zonas) {
+    const container = document.getElementById('zonasList');
+    if (!container) return;
+
+    if (!Array.isArray(zonas) || zonas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>No hay zonas registradas</h3>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    zonas.forEach(z => {
+        const card = document.createElement('div');
+        card.className = 'zone-card';
+        card.innerHTML = `
+            <div class="zone-header">
+                <div class="zone-title">${z.nombre}</div>
+                <div class="zone-urgency urgency-${z.nivelUrgencia.toLowerCase()}">${z.nivelUrgencia}</div>
+            </div>
+            <div class="zone-info">
+                <div class="zone-info-item">
+                    <i class="fas fa-id-card"></i>
+                    <span><strong>ID:</strong> ${z.id}</span>
+                </div>
+                <div class="zone-info-item">
+                    <i class="fas fa-users"></i>
+                    <span><strong>Población:</strong> ${z.poblacionAfectada}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function renderRecursosAdminTable(recursos) {
+    // Similar a zonas
+    console.log('Renderizando recursos:', recursos);
+}
+
+function renderEquiposAdminTable(equipos) {
+    // Similar a zonas
+    console.log('Renderizando equipos:', equipos);
+}
 
 </script>
 </body>
