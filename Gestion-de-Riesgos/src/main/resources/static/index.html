@@ -2320,6 +2320,27 @@
     const treeWidth = 1000;
     const treeHeight = 700;
     const treeNodeRadius = 25;
+// =======================
+// DATOS PARA ESTADÍSTICAS
+// =======================
+
+// Si ya tienes algo parecido, NO lo dupliques, solo ajústalo
+let recursos = [];      // recursos del sistema (camillas, ambulancias, etc.)
+let equipos = [];       // equipos de rescate
+let evacuaciones = [];  // evacuaciones planificadas/ejecutadas
+
+// === GRÁFICAS – VARIABLES GLOBALES ===
+let chartZonasUrgenciaChart = null;
+let chartRecursosTipoChart = null;
+let chartEquiposEstadoChart = null;
+let chartEvacuacionesProgresoChart = null;
+
+function destroyCharts() {
+    if (chartZonasUrgenciaChart) chartZonasUrgenciaChart.destroy();
+    if (chartRecursosTipoChart) chartRecursosTipoChart.destroy();
+    if (chartEquiposEstadoChart) chartEquiposEstadoChart.destroy();
+    if (chartEvacuacionesProgresoChart) chartEvacuacionesProgresoChart.destroy();
+}
 
     // Geocoding inverso para obtener direcciones
     async function getAddress(lat, lng) {
@@ -2510,23 +2531,147 @@ if (data.success) {
         setTimeout(() => element.style.display = 'none', 5000);
     }
 
+// ===========================================================
+// PANEL DE ESTADÍSTICAS — TOTALMENTE FUNCIONAL
+// ===========================================================
+
 async function loadEstadisticasTab() {
+
+    console.log("Cargando estadísticas del sistema…");
+
     try {
-        const response = await fetch(`${API_URL}/estadisticas`);
-        const stats = await response.json();
 
-        // Actualizar los totales en las tarjetas
-        document.getElementById('statsTotalZonas').textContent = stats.totalZonas || 0;
-        document.getElementById('statsTotalRecursos').textContent = stats.totalRecursos || 0;
-        document.getElementById('statsTotalEquipos').textContent = stats.totalEquipos || 0;
-        document.getElementById('statsTotalEvacuaciones').textContent = stats.totalEvacuaciones || 0;
+        // ============================================
+        // 1. ACTUALIZAR TARJETAS DEL RESUMEN NUMÉRICO
+        // ============================================
 
-        // Renderizar gráficas
-        renderCharts(stats);
+        document.getElementById("statsTotalZonas").textContent = zonas.length;
+        document.getElementById("statsTotalRecursos").textContent = recursos.length;
+        document.getElementById("statsTotalEquipos").textContent = equipos.length;
+        document.getElementById("statsTotalEvacuaciones").textContent = evacuaciones.length;
+
+        // ============================================
+        // 2. CALCULAR DATOS PARA GRÁFICAS
+        // ============================================
+
+        // Zonas por urgencia
+        const urgLevelCount = {
+            alta: zonas.filter(z => z.nivelUrgencia === "ALTA" || z.urgencia === "ALTA").length,
+            media: zonas.filter(z => z.nivelUrgencia === "MEDIA" || z.urgencia === "MEDIA").length,
+            critica: zonas.filter(z => z.nivelUrgencia === "CRITICA" || z.urgencia === "CRITICA").length
+        };
+
+        // Recursos por tipo
+        const recursosPorTipo = {};
+        recursos.forEach(r => {
+            recursosPorTipo[r.tipo] = (recursosPorTipo[r.tipo] || 0) + 1;
+        });
+
+        // Equipos por estado
+        const equiposEstados = {
+            disponibles: equipos.filter(e => e.estado === "DISPONIBLE").length,
+            ocupados: equipos.filter(e => e.estado === "OCUPADO").length,
+            enRuta: equipos.filter(e => e.estado === "EN_RUTA").length
+        };
+
+        // Evacuaciones (completas vs pendientes)
+        const evacuacionesCount = {
+            completadas: evacuaciones.filter(ev => ev.completada === true).length,
+            pendientes: evacuaciones.filter(ev => ev.completada === false).length,
+        };
+
+        // ============================================
+        // 3. DESTRUIR GRÁFICAS ANTERIORES
+        // ============================================
+
+        destroyCharts();
+
+        // ============================================
+        // 4. GENERAR NUEVAS GRÁFICAS
+        // ============================================
+
+        // ---------- (a) Zonas por urgencia ----------
+        const ctxZ = document.getElementById("chartZonasUrgencia");
+        if (ctxZ) {
+            chartZonasUrgenciaChart = new Chart(ctxZ, {
+                type: "bar",
+                data: {
+                    labels: ["Alta", "Media", "Crítica"],
+                    datasets: [{
+                        data: [
+                            urgLevelCount.alta,
+                            urgLevelCount.media,
+                            urgLevelCount.critica
+                        ],
+                        backgroundColor: ["#FF9800", "#FFC107", "#F44336"]
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // ---------- (b) Recursos por tipo ----------
+        const ctxR = document.getElementById("chartRecursosTipo");
+        if (ctxR) {
+            chartRecursosTipoChart = new Chart(ctxR, {
+                type: "bar",
+                data: {
+                    labels: Object.keys(recursosPorTipo),
+                    datasets: [{
+                        data: Object.values(recursosPorTipo),
+                        backgroundColor: "#42A5F5"
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // ---------- (c) Equipos por estado ----------
+        const ctxE = document.getElementById("chartEquiposEstado");
+        if (ctxE) {
+            chartEquiposEstadoChart = new Chart(ctxE, {
+                type: "doughnut",
+                data: {
+                    labels: ["Disponible", "Ocupado", "En ruta"],
+                    datasets: [{
+                        data: [
+                            equiposEstados.disponibles,
+                            equiposEstados.ocupados,
+                            equiposEstados.enRuta
+                        ],
+                        backgroundColor: ["#4CAF50", "#FFC107", "#03A9F4"]
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // ---------- (d) Evacuaciones ----------
+        const ctxEv = document.getElementById("chartEvacuacionesProgreso");
+        if (ctxEv) {
+            chartEvacuacionesProgresoChart = new Chart(ctxEv, {
+                type: "doughnut",
+                data: {
+                    labels: ["Completadas", "Pendientes"],
+                    datasets: [{
+                        data: [
+                            evacuacionesCount.completadas,
+                            evacuacionesCount.pendientes
+                        ],
+                        backgroundColor: ["#4CAF50", "#FFC107"]
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        console.log("✔ Estadísticas cargadas correctamente.");
+
     } catch (error) {
-        console.error('Error cargando estadísticas:', error);
+        console.error("Error cargando estadísticas:", error);
     }
 }
+
 // Función para renderizar todas las gráficas
 function renderCharts(stats) {
     // Destruir gráficas existentes si las hay
@@ -4015,6 +4160,8 @@ function showMap() {
     if (tabName === 'rutas') {
         // Ajusta el ID según tu HTML: por ejemplo 'rutas-general'
         switchRoutesTab('rutas-general');
+        switchRoutesTab('rutas-manual');
+        initRutasPanel();
     }
 }
     //=========================================================
@@ -4052,7 +4199,155 @@ function showMap() {
             }
         });
     }
+//=========================================================
+// PANEL DE RUTAS
+//=========================================================
 
+// Para no registrar listeners dos veces
+let rutasPanelInicializado = false;
+
+async function initRutasPanel() {
+    // Evitar inicializar de nuevo si ya está listo
+    if (rutasPanelInicializado) {
+        return;
+    }
+    rutasPanelInicializado = true;
+
+    // 1. Cargar las zonas en los combos de origen/destino
+    await loadZonasForRutas();
+
+    // 2. Conectar el submit del formulario de ruta manual
+    const form = document.getElementById('rutaManualForm');
+    if (form) {
+        form.addEventListener('submit', crearRutaManual);
+    } else {
+        console.warn('No se encontró el formulario #rutaManualForm, revisa el id en el HTML.');
+    }
+}
+
+// Carga las zonas desde la API y llena los selects de origen/destino
+async function loadZonasForRutas() {
+    const selectOrigen  = document.getElementById('rutaZonaOrigen');
+    const selectDestino = document.getElementById('rutaZonaDestino');
+
+    if (!selectOrigen || !selectDestino) {
+        console.warn('No se encontraron los selects #rutaZonaOrigen o #rutaZonaDestino');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}/zonas`, { method: 'GET' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const zonas = await resp.json();
+
+        // Limpiar opciones actuales
+        selectOrigen.innerHTML  = '<option value="">Selecciona zona origen</option>';
+        selectDestino.innerHTML = '<option value="">Selecciona zona destino</option>';
+
+        zonas.forEach(z => {
+            const opt1 = document.createElement('option');
+            opt1.value = z.id;         // ajusta si tu campo es distinto (codigo, uuid, etc.)
+            opt1.textContent = z.nombre || z.id;
+            selectOrigen.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = z.id;
+            opt2.textContent = z.nombre || z.id;
+            selectDestino.appendChild(opt2);
+        });
+    } catch (err) {
+        console.error('Error cargando zonas para rutas:', err);
+        showNotification('No se pudieron cargar las zonas para el panel de rutas', 'error');
+    }
+}
+
+// Maneja el envío del formulario "Crear Ruta Manualmente"
+async function crearRutaManual(event) {
+    event.preventDefault();
+
+    const idRuta              = document.getElementById('rutaId')?.value.trim();
+    const zonaOrigenId        = document.getElementById('rutaZonaOrigen')?.value;
+    const zonaDestinoId       = document.getElementById('rutaZonaDestino')?.value;
+    const distanciaKm         = parseFloat(document.getElementById('rutaDistancia')?.value || '0');
+    const tiempoEstimadoHoras = parseFloat(document.getElementById('rutaTiempo')?.value || '0');
+    const tipoRuta            = document.getElementById('rutaTipo')?.value || 'Terrestre';
+    const capacidadMaxima     = parseInt(document.getElementById('rutaCapacidadMaxima')?.value || '0', 10);
+    const nivelRiesgo         = parseFloat(document.getElementById('rutaRiesgo')?.value || '0');
+
+    // Validación básica
+    if (!idRuta || !zonaOrigenId || !zonaDestinoId) {
+        showNotification('Por favor completa los campos obligatorios de la ruta', 'error');
+        return;
+    }
+
+    const rutaData = {
+        id: idRuta,
+        zonaOrigenId: zonaOrigenId,
+        zonaDestinoId: zonaDestinoId,
+        distanciaKm: distanciaKm,
+        tiempoEstimadoHoras: tiempoEstimadoHoras,
+        tipoRuta: tipoRuta,
+        capacidadMaxima: capacidadMaxima,
+        nivelRiesgo: nivelRiesgo
+    };
+
+    try {
+        const resp = await fetch(`${API_URL}/rutas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rutaData)
+        });
+
+        const result = await resp.json().catch(() => ({}));
+
+        if (resp.ok && (result.success === undefined || result.success === true)) {
+            showNotification('Ruta creada exitosamente', 'success');
+            // resetea el formulario pero conserva los combos cargados
+            event.target.reset();
+            // recargar historial si existe
+            // loadRutasHistorial();
+        } else {
+            console.error('Error al crear ruta:', result);
+            showNotification(result.message || 'No se pudo crear la ruta', 'error');
+        }
+    } catch (err) {
+        console.error('Error de conexión al crear ruta:', err);
+        showNotification('Error de conexión con la API de rutas', 'error');
+    }
+}
+
+// carga el historial de rutas en una tabla
+async function loadRutasHistorial() {
+    const tablaBody = document.getElementById('tablaRutasBody'); // <tbody id="tablaRutasBody">
+    if (!tablaBody) return;
+
+    try {
+        const resp = await fetch(`${API_URL}/rutas`, { method: 'GET' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const rutas = await resp.json();
+
+        tablaBody.innerHTML = '';
+        rutas.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${r.id}</td>
+                <td>${r.zonaOrigen?.nombre || r.zonaOrigenId}</td>
+                <td>${r.zonaDestino?.nombre || r.zonaDestinoId}</td>
+                <td>${r.distanciaKm}</td>
+                <td>${r.tiempoEstimadoHoras}</td>
+                <td>${r.tipoRuta}</td>
+                <td>${r.capacidadMaxima}</td>
+                <td>${r.nivelRiesgo}</td>
+            `;
+            tablaBody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error cargando historial de rutas:', err);
+        showNotification('No se pudo cargar el historial de rutas', 'error');
+    }
+}
     //=========================================================
     // CARGAR DATOS DE INICIO
     //=========================================================
