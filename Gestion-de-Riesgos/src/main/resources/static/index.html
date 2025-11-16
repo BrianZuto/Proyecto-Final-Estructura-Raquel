@@ -2320,11 +2320,21 @@
     const treeWidth = 1000;
     const treeHeight = 700;
     const treeNodeRadius = 25;
+
+    //Datos panel de Administración
+    // Datos en memoria
+let zonasData        = [];
+let recursosData     = [];
+let equiposData      = [];
+let usuariosData     = [];
+let asignacionesData = [];
+
+// Estado de edición
+let editingZonaId = null;   // null = creando, distinto de null = editando
 // =======================
 // DATOS PARA ESTADÍSTICAS
 // =======================
 
-// Si ya tienes algo parecido, NO lo dupliques, solo ajústalo
 let recursos = [];      // recursos del sistema (camillas, ambulancias, etc.)
 let equipos = [];       // equipos de rescate
 let evacuaciones = [];  // evacuaciones planificadas/ejecutadas
@@ -4149,11 +4159,13 @@ function showMap() {
     }
 
     // --- PANEL DE ADMINISTRACIÓN ---
-    // Aquí eliges la subpestaña por defecto del admin
-    if (tabName === 'admin') {
-        // Ajusta el ID según tu HTML: 'admin-zonas', 'admin-recursos', etc.
-        switchAdminTab('admin-zonas');
-    }
+if (tabName === 'admin') {
+    // 1. Cargar toda la información desde la API
+    loadAdminData();
+
+    // 2. Seleccionar automáticamente la pestaña "Zonas"
+    switchAdminTab('gestion-zonas');
+}
 
     // --- PANEL DE RUTAS ---
     // Aquí eliges la subpestaña por defecto del panel de rutas
@@ -4181,6 +4193,539 @@ function showMap() {
             }
         });
     }
+    async function loadAdminData() {
+    try {
+        // Cargar todo lo necesario para el panel de administración
+        const [zonasRes, recursosRes, equiposRes, usuariosRes, asignacionesRes] =
+            await Promise.all([
+                fetch(`${API_URL}/zonas`),
+                fetch(`${API_URL}/recursos`),
+                fetch(`${API_URL}/equipos`),
+                fetch(`${API_URL}/usuarios`),
+                fetch(`${API_URL}/asignaciones`)
+            ]);
+
+        // Guardar en las variables globales (que ya definimos)
+        zonasData        = await zonasRes.json();
+        recursosData     = await recursosRes.json();
+        equiposData      = await equiposRes.json();
+        usuariosData     = await usuariosRes.json();
+        asignacionesData = await asignacionesRes.json();
+
+        // Pintar cada sección del panel
+        renderZonasAdminTable();
+        renderRecursosAdminTable();
+        renderEquiposAdminTable();
+        renderUsuariosAdminTable();
+        renderAsignacionesAdminTable();
+    } catch (error) {
+        console.error('Error cargando datos del panel de administración:', error);
+        // Si tienes showMessage, úsala; si no, esta línea se puede quitar:
+        showMessage('globalMessage', 'Error cargando datos del panel de administración');
+    }}
+    async function handleAdminZoneSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('adminZoneId').value.trim(),
+        nombre: document.getElementById('adminZoneName').value.trim(),
+        descripcion: document.getElementById('adminZoneDesc').value.trim(),
+        coordenadaX: parseFloat(document.getElementById('adminZoneX').value),
+        coordenadaY: parseFloat(document.getElementById('adminZoneY').value),
+        poblacionAfectada: parseInt(document.getElementById('adminZonePop').value || '0', 10),
+        nivelUrgencia: document.getElementById('adminZoneUrgency').value
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre de la zona son obligatorios', 'error');
+        return;
+    }
+
+    const method = editingZonaId ? 'PUT' : 'POST';
+    const url    = editingZonaId
+        ? `${API_URL}/zonas/${encodeURIComponent(editingZonaId)}`
+        : `${API_URL}/zonas`;
+
+    try {
+        const resp   = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error guardando zona:', result);
+            showNotification(result.message || 'No se pudo guardar la zona', 'error');
+            return;
+        }
+
+        showNotification(
+            editingZonaId ? 'Zona actualizada correctamente' : 'Zona creada correctamente',
+            'success'
+        );
+
+        editingZonaId = null;
+        e.target.reset();
+        // volver a cargar todo el panel admin
+        await loadAdminData();
+    } catch (err) {
+        console.error('Error al guardar zona:', err);
+        showNotification('Error de conexión al guardar la zona', 'error');
+    }
+}
+function renderZonasAdminTable() {
+    const cont = document.getElementById('zonasList');
+    if (!cont) return;
+
+    if (!Array.isArray(zonasData) || zonasData.length === 0) {
+        cont.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>No hay zonas registradas</h3>
+                <p>Registra nuevas zonas usando el formulario superior.</p>
+            </div>`;
+        return;
+    }
+
+    cont.innerHTML = '';
+
+    zonasData.forEach(z => {
+        const urgencia = (z.nivelUrgencia || z.urgencia || 'DESCONOCIDA').toUpperCase();
+        const poblacion = z.poblacionAfectada ?? z.personasAfectadas ?? 0;
+
+        let urgencyClass = 'urgency-media';
+        if (urgencia === 'CRITICA') urgencyClass = 'urgency-critica';
+        else if (urgencia === 'ALTA') urgencyClass = 'urgency-alta';
+        else if (urgencia === 'BAJA') urgencyClass = 'urgency-baja';
+
+        const card = document.createElement('div');
+        card.className = 'zone-card';
+        card.innerHTML = `
+            <div class="zone-header">
+                <div class="zone-title">${z.nombre || z.id || 'Zona sin nombre'}</div>
+                <div class="zone-urgency ${urgencyClass}">${urgencia}</div>
+            </div>
+            <div class="zone-info">
+                <div class="zone-info-item">
+                    <i class="fas fa-id-card"></i>
+                    <span><strong>ID:</strong> ${z.id ?? z.codigo ?? '-'}</span>
+                </div>
+                <div class="zone-info-item">
+                    <i class="fas fa-users"></i>
+                    <span><strong>Población afectada:</strong> ${poblacion}</span>
+                </div>
+                <div class="zone-info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span><strong>Coordenadas:</strong> ${z.coordenadaX ?? z.latitud}, ${z.coordenadaY ?? z.longitud}</span>
+                </div>
+            </div>
+            <div class="zone-actions">
+                <button class="btn-secondary" onclick="editZonaAdmin('${z.id}')">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn-danger" onclick="deleteZonaAdmin('${z.id}')">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </div>
+        `;
+        cont.appendChild(card);
+    });
+}
+function editZonaAdmin(id) {
+    const zona = zonasData.find(z => String(z.id) === String(id));
+    if (!zona) return;
+
+    editingZonaId = zona.id;
+
+    document.getElementById('adminZoneId').value       = zona.id;
+    document.getElementById('adminZoneName').value     = zona.nombre || '';
+    document.getElementById('adminZoneDesc').value     = zona.descripcion || '';
+    document.getElementById('adminZoneX').value        = zona.coordenadaX ?? zona.latitud ?? '';
+    document.getElementById('adminZoneY').value        = zona.coordenadaY ?? zona.longitud ?? '';
+    document.getElementById('adminZonePop').value      = zona.poblacionAfectada ?? zona.personasAfectadas ?? 0;
+    document.getElementById('adminZoneUrgency').value  = zona.nivelUrgencia || zona.urgencia || 'MEDIA';
+
+    // ir a la subpestaña de zonas por si está en otra
+    switchAdminTab('gestion-zonas');
+}
+
+async function deleteZonaAdmin(id) {
+    if (!confirm('¿Seguro que deseas eliminar esta zona?')) return;
+
+    try {
+        const resp = await fetch(`${API_URL}/zonas/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error eliminando zona:', result);
+            showNotification(result.message || 'No se pudo eliminar la zona', 'error');
+            return;
+        }
+
+        showNotification('Zona eliminada correctamente', 'success');
+        zonasData = zonasData.filter(z => String(z.id) !== String(id));
+        renderZonasAdminTable();
+    } catch (err) {
+        console.error('Error eliminando zona:', err);
+        showNotification('Error de conexión al eliminar la zona', 'error');
+    }
+}
+async function handleAdminResourceSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('resourceId').value.trim(),
+        nombre: document.getElementById('resourceName').value.trim(),
+        tipo: document.getElementById('resourceType').value,
+        cantidad: parseInt(document.getElementById('resourceQuantity').value || '0', 10),
+        unidad: document.getElementById('resourceUnit').value.trim(),
+        zonaId: document.getElementById('resourceLocation').value.trim() || null
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre del recurso son obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp   = await fetch(`${API_URL}/recursos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error al crear recurso:', result);
+            showNotification(result.message || 'No se pudo crear el recurso', 'error');
+            return;
+        }
+
+        showNotification('Recurso creado correctamente', 'success');
+        e.target.reset();
+        await loadAdminData();
+    } catch (err) {
+        console.error('Error al crear recurso:', err);
+        showNotification('Error de conexión al crear recurso', 'error');
+    }
+}
+function renderRecursosAdminTable() {
+    const cont = document.getElementById('recursosList');
+    if (!cont) return;
+
+    if (!Array.isArray(recursosData) || recursosData.length === 0) {
+        cont.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h3>No hay recursos registrados</h3>
+            </div>`;
+        return;
+    }
+
+    cont.innerHTML = '';
+
+    recursosData.forEach(r => {
+        const tipo = (r.tipoRecurso || r.tipo || 'OTROS').toUpperCase();
+        const cant = r.cantidadTotal ?? r.cantidad ?? 0;
+        const zona = r.zonaId || r.ubicacion || '-';
+
+        const card = document.createElement('div');
+        card.className = 'resource-card';
+        card.innerHTML = `
+            <div class="resource-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="resource-type">${tipo}</div>
+            <div class="resource-amount">${cant}</div>
+            <div style="font-size: 0.85rem; margin-bottom: 6px;">
+                Zona: ${zona}
+            </div>
+            <div class="resource-actions">
+                <button class="btn-danger" onclick="deleteRecursoAdmin('${r.id}')">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </div>
+        `;
+        cont.appendChild(card);
+    });
+}
+
+async function deleteRecursoAdmin(id) {
+    if (!confirm('¿Seguro que deseas eliminar este recurso?')) return;
+
+    try {
+        const resp   = await fetch(`${API_URL}/recursos/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error eliminando recurso:', result);
+            showNotification(result.message || 'No se pudo eliminar el recurso', 'error');
+            return;
+        }
+
+        showNotification('Recurso eliminado correctamente', 'success');
+        recursosData = recursosData.filter(r => String(r.id) !== String(id));
+        renderRecursosAdminTable();
+    } catch (err) {
+        console.error('Error eliminando recurso:', err);
+        showNotification('Error de conexión al eliminar el recurso', 'error');
+    }
+}
+async function handleAdminTeamSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+        id: document.getElementById('teamId').value.trim(),
+        nombre: document.getElementById('teamName').value.trim(),
+        tipo: document.getElementById('teamType').value,
+        ubicacion: document.getElementById('teamLocation').value.trim(),
+        capacidadMaxima: parseInt(document.getElementById('teamCapacity').value || '0', 10),
+        lider: document.getElementById('teamLeader').value.trim(),
+        personalAsignado: parseInt(document.getElementById('teamPersonnel').value || '0', 10),
+        especialidad: document.getElementById('teamSpecialty').value.trim()
+    };
+
+    if (!payload.id || !payload.nombre) {
+        showNotification('ID y Nombre del equipo son obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resp   = await fetch(`${API_URL}/equipos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error al crear equipo:', result);
+            showNotification(result.message || 'No se pudo crear el equipo', 'error');
+            return;
+        }
+
+        showNotification('Equipo creado correctamente', 'success');
+        e.target.reset();
+        await loadAdminData();
+    } catch (err) {
+        console.error('Error al crear equipo:', err);
+        showNotification('Error de conexión al crear equipo', 'error');
+    }
+}
+function renderEquiposAdminTable() {
+    const cont = document.getElementById('equiposList');
+    if (!cont) return;
+
+    if (!Array.isArray(equiposData) || equiposData.length === 0) {
+        cont.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>No hay equipos registrados</h3>
+            </div>`;
+        return;
+    }
+
+    cont.innerHTML = '';
+
+    equiposData.forEach(eq => {
+        const nombre  = eq.nombre || eq.nombreEquipo || ('Equipo #' + (eq.id ?? ''));
+        const tipo    = eq.tipo || eq.tipoEquipo || 'Sin tipo';
+        const estado  = normalizarEstado(eq.estado || 'DESCONOCIDO');
+        const ubic    = eq.ubicacion || eq.zonaId || '-';
+
+        let statusClass = 'status-transito';
+        if (estado === 'DISPONIBLE') statusClass = 'status-disponible';
+        else if (['EN_OPERACION', 'OPERACION', 'ACTIVO'].includes(estado)) statusClass = 'status-operacion';
+
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+            <div class="team-info">
+                <div class="team-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="team-details">
+                    <div class="team-name">${nombre}</div>
+                    <div class="team-type">${tipo}</div>
+                    <div class="team-location"><i class="fas fa-map-marker-alt"></i> ${ubic}</div>
+                </div>
+            </div>
+            <div class="team-status">
+                <span class="status-badge ${statusClass}">${estado}</span>
+                <button class="btn-danger" onclick="deleteEquipoAdmin('${eq.id}')">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </div>
+        `;
+        cont.appendChild(card);
+    });
+}
+
+async function deleteEquipoAdmin(id) {
+    if (!confirm('¿Seguro que deseas eliminar este equipo?')) return;
+
+    try {
+        const resp   = await fetch(`${API_URL}/equipos/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error eliminando equipo:', result);
+            showNotification(result.message || 'No se pudo eliminar el equipo', 'error');
+            return;
+        }
+
+        showNotification('Equipo eliminado correctamente', 'success');
+        equiposData = equiposData.filter(eq => String(eq.id) !== String(id));
+        renderEquiposAdminTable();
+    } catch (err) {
+        console.error('Error eliminando equipo:', err);
+        showNotification('Error de conexión al eliminar el equipo', 'error');
+    }
+}
+function renderUsuariosAdminTable() {
+    const cont = document.getElementById('usersList');
+    if (!cont) return;
+
+    if (!Array.isArray(usuariosData) || usuariosData.length === 0) {
+        cont.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-cog"></i>
+                <h3>No hay usuarios registrados</h3>
+            </div>`;
+        return;
+    }
+
+    const html = `
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${usuariosData.map(u => `
+                    <tr>
+                        <td>${u.username || '-'}</td>
+                        <td>${(u.nombre || '') + ' ' + (u.apellido || '')}</td>
+                        <td>${u.email || '-'}</td>
+                        <td>${u.rol || '-'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    cont.innerHTML = html;
+}
+function renderAsignacionesAdminTable() {
+    // 1. llenar combos de zona y recurso
+    const selZona = document.getElementById('assignZoneSelect');
+    const selRec  = document.getElementById('assignResourceSelect');
+    if (!selZona || !selRec) return;
+
+    selZona.innerHTML = '<option value="">Selecciona una zona</option>';
+    zonasData.forEach(z => {
+        const opt = document.createElement('option');
+        opt.value = z.id;
+        opt.textContent = z.nombre || z.id;
+        selZona.appendChild(opt);
+    });
+
+    selRec.innerHTML = '<option value="">Selecciona un recurso</option>';
+    recursosData.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = `${r.nombre || r.id} (${r.tipo || r.tipoRecurso})`;
+        selRec.appendChild(opt);
+    });
+
+    // 2. Si ya hay una zona seleccionada, refrescar su listado
+    loadZoneResources();
+}
+
+function loadZoneResources() {
+    const zonaId = document.getElementById('assignZoneSelect')?.value;
+    const cont   = document.getElementById('assignedResourcesList');
+    const infoBox = document.getElementById('zoneResourcesInfo');
+
+    if (!cont || !infoBox) return;
+
+    if (!zonaId) {
+        infoBox.style.display = 'none';
+        cont.innerHTML = '';
+        return;
+    }
+
+    infoBox.style.display = 'block';
+
+    const asignadas = Array.isArray(asignacionesData)
+        ? asignacionesData.filter(a => String(a.zonaId) === String(zonaId))
+        : [];
+
+    if (asignadas.length === 0) {
+        cont.innerHTML = `
+            <p>No hay recursos asignados a esta zona.</p>
+        `;
+        return;
+    }
+
+    cont.innerHTML = `
+        <ul class="assigned-list">
+            ${asignadas.map(a => {
+                const rec = recursosData.find(r => String(r.id) === String(a.recursoId));
+                const nombreRec = rec ? (rec.nombre || rec.id) : a.recursoId;
+                return `<li>${nombreRec} — Cantidad: ${a.cantidad || 0}</li>`;
+            }).join('')}
+        </ul>
+    `;
+}
+
+async function assignResourceToZone() {
+    const zonaId     = document.getElementById('assignZoneSelect')?.value;
+    const recursoId  = document.getElementById('assignResourceSelect')?.value;
+    const cantidad   = parseInt(document.getElementById('assignQuantity')?.value || '1', 10);
+
+    if (!zonaId || !recursoId || !cantidad) {
+        showNotification('Selecciona zona, recurso y una cantidad válida', 'error');
+        return;
+    }
+
+    const payload = {
+        zonaId,
+        recursoId,
+        cantidad
+    };
+
+    try {
+        const resp   = await fetch(`${API_URL}/asignaciones`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error asignando recurso:', result);
+            showNotification(result.message || 'No se pudo asignar el recurso', 'error');
+            return;
+        }
+
+        showNotification('Recurso asignado correctamente', 'success');
+        await loadAdminData(); // recarga asignacionesData y vuelve a pintar
+    } catch (err) {
+        console.error('Error asignando recurso:', err);
+        showNotification('Error de conexión al asignar el recurso', 'error');
+    }
+}
 
     //=========================================================
     // FUNCIONES DE RUTAS
@@ -4854,6 +5399,22 @@ async function loadRutasHistorial() {
             document.getElementById('password').value = '';
         }
     }
+    document.addEventListener('DOMContentLoaded', () => {
+    const zoneFormAdmin    = document.getElementById('createZoneFormAdmin');
+    const resourceForm     = document.getElementById('createResourceForm');
+    const teamForm         = document.getElementById('createTeamForm');
+
+    if (zoneFormAdmin) {
+        zoneFormAdmin.addEventListener('submit', handleAdminZoneSubmit);
+    }
+    if (resourceForm) {
+        resourceForm.addEventListener('submit', handleAdminResourceSubmit);
+    }
+    if (teamForm) {
+        teamForm.addEventListener('submit', handleAdminTeamSubmit);
+    }
+});
+
 </script>
 </body>
 </html>
