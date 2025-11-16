@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -993,6 +995,172 @@
     .section-container canvas { max-width: 360px; }
 }
 
+/* Arbol de distribución */
+
+.tree-controls-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+        }
+
+        .tree-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .tree-visualization-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #tree-svg {
+            width: 100%;
+            height: 700px;
+            cursor: grab;
+        }
+
+        #tree-svg:active {
+            cursor: grabbing;
+        }
+
+        .d3-node circle {
+            fill: #fff;
+            stroke-width: 3px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .d3-node circle:hover {
+            filter: brightness(0.9);
+            transform: scale(1.1);
+        }
+
+        .d3-node text {
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .d3-link {
+            fill: none;
+            stroke-width: 2px;
+            transition: all 0.3s;
+        }
+
+        .d3-node.collapsed circle {
+            stroke-width: 4px;
+        }
+
+        .tree-legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+            z-index: 10;
+        }
+
+        .tree-legend h4 {
+            color: #2d3748;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .tree-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .tree-legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tree-zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .tree-zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            color: #4a5568;
+        }
+
+        .tree-zoom-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .tree-stats-box {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tree-stats-box h4 {
+            color: #2d3748;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .tree-stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #4a5568;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tree-stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .tree-stat-value {
+            font-weight: 700;
+            color: #667eea;
+        }
+
     </style>
 </head>
 <body>
@@ -1114,6 +1282,10 @@
             </button>
             <button class="tab-button" onclick="switchTab('estadisticas')" data-tab="estadisticas">
                 <i class="fas fa-chart-bar"></i> Estadísticas
+            </button>
+            <!-- NUEVA PESTAÑA DEL ÁRBOL -->
+            <button class="tab-button" onclick="switchTab('arbol')" data-tab="arbol">
+                <i class="fas fa-sitemap"></i> Árbol de Distribución
             </button>
             <button class="tab-button" onclick="switchTab('mapa')" data-tab="mapa">
                 <i class="fas fa-map-marked-alt"></i> Mapa Interactivo
@@ -1944,6 +2116,138 @@
     </div>
 </div>
 
+<!--NUEVA PESTAÑA: ÁRBOL DE DISTRIBUCIÓN-->
+<div id="arbol-tab" class="tab-content">
+                <div class="container">
+                    <div class="welcome-section">
+                        <h1><i class="fas fa-sitemap"></i> Árbol de Distribución de Recursos</h1>
+                        <p class="subtitle">Visualización jerárquica interactiva - Haz clic en los nodos para expandir/contraer</p>
+                    </div>
+
+                    <!-- Panel de Control -->
+                    <div class="tree-controls-panel">
+                        <div class="section-header">
+                            <h2><i class="fas fa-cogs"></i> Controles del Árbol</h2>
+                        </div>
+
+                        <div class="tree-stats-box" style="margin-bottom: 20px;">
+                            <h4><i class="fas fa-chart-bar"></i> Estadísticas del Árbol</h4>
+                            <div class="tree-stat-item">
+                                <span>Total de Nodos:</span>
+                                <span class="tree-stat-value" id="treeTotalNodes">0</span>
+                            </div>
+                            <div class="tree-stat-item">
+                                <span>Cantidad Total:</span>
+                                <span class="tree-stat-value" id="treeTotalQuantity">0</span>
+                            </div>
+                            <div class="tree-stat-item">
+                                <span>Profundidad Máxima:</span>
+                                <span class="tree-stat-value" id="treeMaxDepth">0</span>
+                            </div>
+                        </div>
+
+                        <form id="treeNodeForm" class="two-column">
+                            <div class="input-group">
+                                <label><i class="fas fa-tag"></i> ID del Nodo *</label>
+                                <input type="text" id="treeNodeId" required placeholder="ej. nodo_1">
+                            </div>
+
+                            <div class="input-group">
+                                <label><i class="fas fa-box"></i> Recurso *</label>
+                                <select id="treeResourceSelect" required>
+                                    <option value="">Selecciona un recurso</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label><i class="fas fa-sort-numeric-up"></i> Cantidad *</label>
+                                <input type="number" id="treeQuantity" required min="1" value="100">
+                            </div>
+
+                            <div class="input-group">
+                                <label><i class="fas fa-star"></i> Prioridad (1-10)</label>
+                                <input type="number" id="treePriority" min="1" max="10" value="5">
+                            </div>
+
+                            <div class="input-group">
+                                <label><i class="fas fa-level-up-alt"></i> Nodo Padre</label>
+                                <select id="treeParentNode">
+                                    <option value="">Raíz</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group" style="grid-column: 1 / -1; display: flex; gap: 10px;">
+                                <button type="submit" class="btn-primary" style="flex: 1;">
+                                    <i class="fas fa-plus-circle"></i> Agregar Nodo
+                                </button>
+                                <button type="button" class="btn-action" onclick="treeCenterView()" style="flex: 1;">
+                                    <i class="fas fa-compress-arrows-alt"></i> Centrar
+                                </button>
+                            </div>
+                        </form>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px;">
+                            <button class="btn-action" onclick="treeExpandAll()">
+                                <i class="fas fa-expand-alt"></i> Expandir Todo
+                            </button>
+                            <button class="btn-action" onclick="treeCollapseAll()">
+                                <i class="fas fa-compress-alt"></i> Contraer Todo
+                            </button>
+                            <button class="btn-action" onclick="treeLoadFromApi()" style="background: #48bb78;">
+                                <i class="fas fa-sync-alt"></i> Cargar de API
+                            </button>
+                            <button class="btn-action" onclick="treeClearAll()" style="background: #f56565; color: white;">
+                                <i class="fas fa-trash"></i> Limpiar Todo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visualización del Árbol -->
+                    <div class="tree-visualization-container">
+                        <svg id="tree-svg"></svg>
+                        
+                        <div class="tree-legend">
+                            <h4><i class="fas fa-info-circle"></i> Leyenda</h4>
+                            <div class="tree-legend-item">
+                                <div class="tree-legend-color" style="background: #667eea;"></div>
+                                <span>Prioridad Alta (7-10)</span>
+                            </div>
+                            <div class="tree-legend-item">
+                                <div class="tree-legend-color" style="background: #48bb78;"></div>
+                                <span>Prioridad Media (4-6)</span>
+                            </div>
+                            <div class="tree-legend-item">
+                                <div class="tree-legend-color" style="background: #ed8936;"></div>
+                                <span>Prioridad Baja (1-3)</span>
+                            </div>
+                            <div class="tree-legend-item">
+                                <i class="fas fa-plus-circle" style="color: #667eea;"></i>
+                                <span>Clic para expandir</span>
+                            </div>
+                            <div class="tree-legend-item">
+                                <i class="fas fa-minus-circle" style="color: #f56565;"></i>
+                                <span>Clic para contraer</span>
+                            </div>
+                        </div>
+
+                        <div class="tree-zoom-controls">
+                            <button class="tree-zoom-btn" onclick="treeZoomIn()" title="Acercar">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="tree-zoom-btn" onclick="treeZoomOut()" title="Alejar">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button class="tree-zoom-btn" onclick="treeResetZoom()" title="Resetear Zoom">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para crear zona -->
 <div id="createZoneModal" class="modal">
     <div class="modal-content">
@@ -2005,6 +2309,17 @@
     let zoneCircles = [];
     let currentRoutingControl = null;
     let tempCircle = null;
+    let treeData = {
+        id: "root",
+        name: "Distribución Central",
+        quantity: 0,
+        priority: 10,
+        children: []
+    };
+    let treeSvg, treeG, d3Tree, treeRoot, treeZoom;
+    const treeWidth = 1000;
+    const treeHeight = 700;
+    const treeNodeRadius = 25;
 
     // Geocoding inverso para obtener direcciones
     async function getAddress(lat, lng) {
@@ -3249,6 +3564,1017 @@ function showMap() {
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
             closeModal(event.target.id);
+        }
+    }
+
+    // ==========================================================
+    // FUNCIONES DEL ARBOL DE DISTRIBUCIÓN
+    // ==========================================================
+
+    function initTree() {
+        treeSvg = d3.select("#tree-svg");
+        
+        treeZoom = d3.zoom()
+            .scaleExtent([0.1, 3])
+            .on("zoom", (event) => {
+                treeG.attr("transform", event.transform);
+            });
+
+        treeSvg.call(treeZoom);
+
+        treeG = treeSvg.append("g")
+            .attr("transform", `translate(${treeWidth / 2}, 50)`);
+
+        d3Tree = d3.tree()
+            .size([treeWidth - 200, treeHeight - 100])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
+
+        updateTreeVisualization();
+        loadTreeResources();
+    }
+
+    function updateTreeVisualization() {
+        if (!d3Tree) return;
+
+        treeRoot = d3.hierarchy(treeData);
+        d3Tree(treeRoot);
+
+        updateTreeStats();
+        updateTreeParentSelect();
+        drawTree();
+    }
+
+    function drawTree() {
+        const duration = 750;
+
+        // Links (conexiones)
+        const link = treeG.selectAll(".d3-link")
+            .data(treeRoot.links(), d => `${d.source.data.id}-${d.target.data.id}`);
+
+        link.exit()
+            .transition()
+            .duration(duration)
+            .style("opacity", 0)
+            .remove();
+
+        const linkEnter = link.enter()
+            .append("path")
+            .attr("class", "d3-link")
+            .attr("d", d => {
+                const o = {x: d.source.x, y: d.source.y};
+                return treeDiagonal(o, o);
+            })
+            .style("opacity", 0)
+            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority));
+
+            linkEnter.merge(link)
+            .transition()
+            .duration(duration)
+            .attr("d", d => treeDiagonal(d.source, d.target))
+            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority))
+            .style("opacity", d => d.target.data._collapsed ? 0.3 : 1);
+
+        // Nodes (nodos)
+        const node = treeG.selectAll(".d3-node")
+            .data(treeRoot.descendants(), d => d.data.id);
+
+        node.exit()
+            .transition()
+            .duration(duration)
+            .style("opacity", 0)
+            .remove();
+
+        const nodeEnter = node.enter()
+            .append("g")
+            .attr("class", "d3-node")
+            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .style("opacity", 0)
+            .on("click", (event, d) => toggleTreeNode(event, d));
+            // Círculo del nodo
+        nodeEnter.append("circle")
+            .attr("r", treeNodeRadius)
+            .attr("stroke", d => getTreeColorByPriority(d.data.priority))
+            .attr("fill", "#fff")
+            .attr("stroke-width", 3);
+
+        // Texto: Nombre
+        nodeEnter.append("text")
+            .attr("dy", -treeNodeRadius - 5)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#2d3748")
+            .style("font-weight", "700")
+            .text(d => d.data.name);
+
+        // Texto: Cantidad
+        nodeEnter.append("text")
+            .attr("dy", 5)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#4a5568")
+            .style("font-size", "11px")
+            .text(d => `${d.data.quantity} unidades`);
+
+        // Texto: Prioridad
+        nodeEnter.append("text")
+            .attr("dy", treeNodeRadius + 15)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#718096")
+            .style("font-size", "10px")
+            .text(d => `P: ${d.data.priority}`);
+
+        // Indicador de expansión/colapso
+        nodeEnter.each(function(d) {
+            if (d.data.children && d.data.children.length > 0) {
+                d3.select(this).append("circle")
+                    .attr("r", 8)
+                    .attr("cx", treeNodeRadius - 5)
+                    .attr("cy", -treeNodeRadius + 5)
+                    .attr("fill", d.data._collapsed ? "#f56565" : "#48bb78")
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 2);
+
+                d3.select(this).append("text")
+                    .attr("x", treeNodeRadius - 5)
+                    .attr("y", -treeNodeRadius + 5)
+                    .attr("dy", 4)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#fff")
+                    .style("font-size", "10px")
+                    .style("font-weight", "bold")
+                    .text(d.data._collapsed ? "+" : "-");
+            }
+        });
+
+        nodeEnter.transition()
+            .duration(duration)
+            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .style("opacity", 1);
+
+        node.transition()
+            .duration(duration)
+            .attr("transform", d => `translate(${d.x},${d.y})`);
+    }
+
+    function treeDiagonal(s, d) {
+        return `M ${s.x} ${s.y}
+                C ${s.x} ${(s.y + d.y) / 2},
+                  ${d.x} ${(s.y + d.y) / 2},
+                  ${d.x} ${d.y}`;
+    }
+
+    function getTreeColorByPriority(priority) {
+        if (priority >= 7) return "#667eea";
+        if (priority >= 4) return "#48bb78";
+        return "#ed8936";
+    }
+
+    function toggleTreeNode(event, d) {
+        if (!d.data.children || d.data.children.length === 0) return;
+        
+        d.data._collapsed = !d.data._collapsed;
+        
+        if (d.data._collapsed) {
+            d.data._children = d.data.children;
+            d.data.children = null;
+        } else {
+            d.data.children = d.data._children;
+            d.data._children = null;
+        }
+        
+        updateTreeVisualization();
+    }
+
+    function updateTreeStats() {
+        const totalNodes = countTreeNodes(treeData) - 1;
+        const totalQuantity = sumTreeQuantities(treeData);
+        const maxDepth = getTreeMaxDepth(treeRoot);
+
+        document.getElementById("treeTotalNodes").textContent = totalNodes;
+        document.getElementById("treeTotalQuantity").textContent = totalQuantity;
+        document.getElementById("treeMaxDepth").textContent = maxDepth;
+
+        treeData.quantity = totalQuantity;
+    }
+
+    function countTreeNodes(node) {
+        let count = 1;
+        if (node.children) {
+            node.children.forEach(child => {
+                count += countTreeNodes(child);
+            });
+        }
+        return count;
+    }
+
+    function sumTreeQuantities(node) {
+        let sum = node.id === "root" ? 0 : node.quantity;
+        if (node.children) {
+            node.children.forEach(child => {
+                sum += sumTreeQuantities(child);
+            });
+        }
+        return sum;
+    }
+
+    function getTreeMaxDepth(node) {
+        if (!node.children || node.children.length === 0) return 0;
+        return 1 + Math.max(...node.children.map(child => getTreeMaxDepth(child)));
+    }
+
+    function updateTreeParentSelect() {
+        const select = document.getElementById("treeParentNode");
+        select.innerHTML = '<option value="">Raíz</option>';
+
+        function addOptions(node, level = 0) {
+            if (node.id !== "root") {
+                const option = document.createElement("option");
+                option.value = node.id;
+                option.textContent = "  ".repeat(level) + node.name;
+                select.appendChild(option);
+            }
+            if (node.children) {
+                node.children.forEach(child => addOptions(child, level + 1));
+            }
+        }
+
+        addOptions(treeData);
+    }
+
+    function findTreeNode(node, id) {
+        if (node.id === id) return node;
+        if (node.children) {
+            for (let child of node.children) {
+                const found = findTreeNode(child, id);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    // Controladores de eventos
+    document.getElementById('treeNodeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nodeId = document.getElementById("treeNodeId").value.trim();
+        const resourceSelect = document.getElementById("treeResourceSelect");
+        const resourceName = resourceSelect.options[resourceSelect.selectedIndex].text;
+        const resourceId = resourceSelect.value;
+        const quantity = parseInt(document.getElementById("treeQuantity").value) || 0;
+        const priority = parseInt(document.getElementById("treePriority").value) || 5;
+        const parentId = document.getElementById("treeParentNode").value;
+
+        if (!nodeId || !resourceId) {
+            showNotification("Por favor completa todos los campos requeridos", "error");
+            return;
+        }
+
+        const newNode = {
+            id: nodeId,
+            name: resourceName,
+            resourceId: resourceId,
+            quantity: quantity,
+            priority: priority,
+            children: []
+        };
+
+        if (parentId === "") {
+            treeData.children.push(newNode);
+            
+            // Llamar a la API para crear el nodo raíz
+            try {
+                await fetch(`${API_URL}/arbol/crearRaiz`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recursoId: resourceId,
+                        cantidad: quantity
+                    })
+                });
+            } catch (error) {
+                console.error("Error creando nodo raíz en API:", error);
+            }
+        } else {
+            const parent = findTreeNode(treeData, parentId);
+            if (parent) {
+                parent.children.push(newNode);
+                
+                // Llamar a la API para agregar nodo
+                try {
+                    await fetch(`${API_URL}/arbol/agregarNodo`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: nodeId,
+                            recursoId: resourceId,
+                            cantidad: quantity,
+                            idPadre: parentId
+                        })
+                    });
+                } catch (error) {
+                    console.error("Error agregando nodo en API:", error);
+                }
+            } else {
+                showNotification("Nodo padre no encontrado", "error");
+                return;
+            }
+        }
+
+        updateTreeVisualization();
+        
+        // Limpiar formulario
+        document.getElementById("treeNodeId").value = "";
+        document.getElementById("treeQuantity").value = "100";
+        document.getElementById("treePriority").value = "5";
+        
+        showNotification(`Nodo "${resourceName}" agregado exitosamente`, "success");
+    });
+
+    async function loadTreeResources() {
+        try {
+            const response = await fetch(`${API_URL}/recursos`);
+            const recursos = await response.json();
+
+            const select = document.getElementById("treeResourceSelect");
+            select.innerHTML = '<option value="">Selecciona un recurso</option>';
+
+            recursos.forEach(recurso => {
+                const option = document.createElement("option");
+                option.value = recurso.id;
+                option.textContent = `${recurso.nombre} (${recurso.cantidadDisponible} ${recurso.unidadMedida})`;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Error cargando recursos:", error);
+        }
+    }
+
+    async function treeLoadFromApi() {
+        try {
+            const response = await fetch(`${API_URL}/arbol/total`);
+            const data = await response.json();
+            
+            showNotification(`Total en árbol API: ${data.total}`, "success");
+        } catch (error) {
+            console.error("Error cargando del árbol API:", error);
+            showNotification("Error al cargar datos del árbol", "error");
+        }
+    }
+
+    function treeCenterView() {
+        if (!treeSvg) return;
+        treeSvg.transition()
+            .duration(750)
+            .call(treeZoom.transform, d3.zoomIdentity.translate(treeWidth / 2, 50));
+    }
+
+    function treeZoomIn() {
+        if (!treeSvg) return;
+        treeSvg.transition()
+            .duration(300)
+            .call(treeZoom.scaleBy, 1.3);
+    }
+
+    function treeZoomOut() {
+        if (!treeSvg) return;
+        treeSvg.transition()
+            .duration(300)
+            .call(treeZoom.scaleBy, 0.7);
+    }
+
+    function treeResetZoom() {
+        treeCenterView();
+    }
+
+    function treeExpandAll() {
+        function expand(node) {
+            if (node._children) {
+                node.children = node._children;
+                node._children = null;
+                node._collapsed = false;
+            }
+            if (node.children) {
+                node.children.forEach(expand);
+            }
+        }
+        expand(treeData);
+        updateTreeVisualization();
+        showNotification("Todos los nodos expandidos", "success");
+    }
+
+    function treeCollapseAll() {
+        function collapse(node) {
+            if (node.children && node.id !== "root") {
+                node._children = node.children;
+                node.children = null;
+                node._collapsed = true;
+            }
+            if (node._children) {
+                node._children.forEach(collapse);
+            }
+        }
+        collapse(treeData);
+        updateTreeVisualization();
+        showNotification("Todos los nodos contraídos", "success");
+    }
+
+    function treeClearAll() {
+        if (confirm("¿Estás seguro de que deseas limpiar el árbol? Se perderán todos los datos.")) {
+            treeData = {
+                id: "root",
+                name: "Distribución Central",
+                quantity: 0,
+                priority: 10,
+                children: []
+            };
+            updateTreeVisualization();
+            showNotification("Árbol limpiado", "success");
+        }
+    }
+
+    // ==========================================================
+    // MODIFICAR switchTab para inicializar el arbol
+    // ==========================================================
+    function switchTab(tabName) {
+        // Activar botón correcto
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Mostrar contenido correcto
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.toggle('active', tab.id === tabName + '-tab');
+        });
+
+        // Inicializar según la pestaña
+        if (tabName === 'mapa') {
+            setTimeout(() => {
+                if (!map) {
+                    initializeMap();
+                } else {
+                    map.invalidateSize();
+                }
+            }, 100);
+        }
+
+        if (tabName === 'inicio') {
+            loadInicioData();
+        }
+
+        if (tabName === 'estadisticas') {
+            loadEstadisticasTab();
+        }
+
+        // NUEVO: Inicializar árbol D3
+        if (tabName === 'arbol') {
+            setTimeout(() => {
+                if (!d3Tree) {
+                    initTree();
+                } else {
+                    updateTreeVisualization();
+                }
+            }, 100);
+        }
+    }
+
+    //=========================================================
+    // FUNCIONES ADMINISTRATIVAS
+    //=========================================================
+    function switchAdminTab(tabName) {
+        document.querySelectorAll('.admin-tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+        
+        const buttons = document.querySelectorAll('#admin-tab .tabs-header .tab-button');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.toLowerCase().includes(tabName.split('-')[1])) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    //=========================================================
+    // FUNCIONES DE RUTAS
+    //=========================================================
+    function switchRoutesTab(tabName) {
+        document.querySelectorAll('.routes-tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+        
+        const buttons = document.querySelectorAll('#rutas-tab .tabs-header .tab-button');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.toLowerCase().includes(tabName.split('-').slice(-1)[0])) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    //=========================================================
+    // CARGAR DATOS DE INICIO
+    //=========================================================
+    async function loadInicioData() {
+        try {
+            document.getElementById('zonasDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando zonas...
+                </div>`;
+            document.getElementById('recursosDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
+                </div>`;
+            document.getElementById('equiposDisplay').innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando equipos...
+                </div>`;
+
+            const [statsRes, zonasRes, recursosRes, equiposRes, evacRes] = await Promise.all([
+                fetch(`${API_URL}/estadisticas`, { method: 'GET' }),
+                fetch(`${API_URL}/zonas`, { method: 'GET' }),
+                fetch(`${API_URL}/recursos`, { method: 'GET' }),
+                fetch(`${API_URL}/equipos`, { method: 'GET' }),
+                fetch(`${API_URL}/evacuaciones`, { method: 'GET' })
+            ]);
+
+            const [stats, zonasData, recursosData, equiposData, evacData] = await Promise.all([
+                safeJson(statsRes),
+                safeJson(zonasRes),
+                safeJson(recursosRes),
+                safeJson(equiposRes),
+                safeJson(evacRes)
+            ]);
+
+            const totalZonas = (stats && stats.totalZonas) ?? (Array.isArray(zonasData) ? zonasData.length : 0);
+            const totalRecursos = (stats && stats.totalRecursos) ?? calcularTotalRecursos(recursosData);
+            const totalEquipos = (stats && stats.totalEquipos) ?? (Array.isArray(equiposData) ? equiposData.length : 0);
+            const totalEvacuaciones = (stats && stats.totalEvacuaciones) ?? (Array.isArray(evacData) ? evacData.length : 0);
+
+            const numCriticas = Array.isArray(zonasData)
+                ? zonasData.filter(z => (z.nivelUrgencia || z.urgencia) === 'CRITICA').length
+                : 0;
+
+            const porcRecursos = (stats && stats.porcentajeRecursosDisponibles) ??
+                calcularPorcentajeRecursosDisponibles(recursosData);
+
+            const equiposDisponibles = Array.isArray(equiposData)
+                ? equiposData.filter(eq => normalizarEstado(eq.estado) === 'DISPONIBLE').length
+                : 0;
+
+            const progresoEvac = (stats && stats.porcentajeEvacuacionesCompletadas) ??
+                calcularPorcentajeEvacuaciones(evacData);
+
+            document.getElementById('totalZonas').textContent = totalZonas;
+            document.getElementById('zonasCriticas').textContent = `${numCriticas} críticas`;
+
+            document.getElementById('totalRecursos').textContent = totalRecursos;
+            document.getElementById('recursosDisponibles').textContent =
+                porcRecursos !== null ? `${porcRecursos}% disponibilidad` : 'Sin datos de disponibilidad';
+
+            document.getElementById('totalEquipos').textContent = totalEquipos;
+            document.getElementById('equiposDisponibles').textContent = `${equiposDisponibles} disponibles`;
+
+            document.getElementById('totalEvacuaciones').textContent = totalEvacuaciones;
+            document.getElementById('evacuacionesProgreso').textContent =
+                progresoEvac !== null ? `${progresoEvac}% progreso` : 'Sin datos de progreso';
+
+            renderZonasInicio(zonasData);
+            renderRecursosInicio(recursosData);
+            renderEquiposInicio(equiposData);
+
+        } catch (error) {
+            console.error('Error cargando datos de inicio:', error);
+            document.getElementById('zonasDisplay').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando zonas</h3>
+                    <p>Revisa la consola del navegador o la API.</p>
+                </div>`;
+        }
+    }
+
+    async function safeJson(response) {
+        try {
+            if (!response || !response.ok) return null;
+            return await response.json();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function calcularTotalRecursos(recursos) {
+        if (!Array.isArray(recursos)) return 0;
+        return recursos.reduce((sum, r) => {
+            const cant = r.cantidadTotal ?? r.cantidadDisponible ?? r.cantidad ?? 1;
+            return sum + (Number.isFinite(cant) ? cant : 0);
+        }, 0);
+    }
+
+    function calcularPorcentajeRecursosDisponibles(recursos) {
+        if (!Array.isArray(recursos) || recursos.length === 0) return null;
+
+        let total = 0;
+        let disponibles = 0;
+
+        recursos.forEach(r => {
+            const cantTotal = r.cantidadTotal ?? r.cantidad ?? 1;
+            const cantDisp = r.cantidadDisponible ?? (r.disponible === true ? cantTotal : 0);
+
+            total += Number.isFinite(cantTotal) ? cantTotal : 0;
+            disponibles += Number.isFinite(cantDisp) ? cantDisp : 0;
+        });
+
+        if (!total) return null;
+        return Math.round((disponibles / total) * 100);
+    }
+
+    function normalizarEstado(estado) {
+        if (!estado) return '';
+        return String(estado).toUpperCase();
+    }
+
+    function calcularPorcentajeEvacuaciones(evac) {
+        if (!Array.isArray(evac) || evac.length === 0) return null;
+
+        const completadas = evac.filter(e =>
+            ['COMPLETADA', 'FINALIZADA'].includes(normalizarEstado(e.estado))
+        ).length;
+
+        return Math.round((completadas / evac.length) * 100);
+    }
+
+    function renderZonasInicio(zonasData) {
+        const cont = document.getElementById('zonasDisplay');
+
+        if (!Array.isArray(zonasData) || zonasData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>No hay zonas registradas</h3>
+                    <p>Agrega zonas desde la API o el panel de administración.</p>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        zonasData.forEach(z => {
+            const urgencia = (z.nivelUrgencia || z.urgencia || 'DESCONOCIDA').toUpperCase();
+            const poblacion = z.poblacionAfectada ?? z.personasAfectadas ?? 0;
+
+            let urgencyClass = 'urgency-media';
+            if (urgencia === 'CRITICA') urgencyClass = 'urgency-critica';
+            else if (urgencia === 'ALTA') urgencyClass = 'urgency-alta';
+            else if (urgencia === 'BAJA') urgencyClass = 'urgency-baja';
+
+            const card = document.createElement('div');
+            card.className = 'zone-card';
+            card.innerHTML = `
+                <div class="zone-header">
+                    <div class="zone-title">${z.nombre || z.id || 'Zona sin nombre'}</div>
+                    <div class="zone-urgency ${urgencyClass}">${urgencia}</div>
+                </div>
+                <div class="zone-info">
+                    <div class="zone-info-item">
+                        <i class="fas fa-id-card"></i>
+                        <span><strong>ID:</strong> ${z.id ?? z.codigo ?? '-'}</span>
+                    </div>
+                    <div class="zone-info-item">
+                        <i class="fas fa-users"></i>
+                        <span><strong>Población afectada:</strong> ${poblacion}</span>
+                    </div>
+                    <div class="zone-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span><strong>Coordenadas:</strong> ${z.coordenadaX ?? z.latitud}, ${z.coordenadaY ?? z.longitud}</span>
+                    </div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+    }
+
+    function renderRecursosInicio(recursosData) {
+        const cont = document.getElementById('recursosDisplay');
+
+        if (!Array.isArray(recursosData) || recursosData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <h3>No hay recursos registrados</h3>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        const agrupados = {};
+        recursosData.forEach(r => {
+            const tipo = (r.tipoRecurso || r.tipo || 'OTROS').toUpperCase();
+            if (!agrupados[tipo]) {
+                agrupados[tipo] = { total: 0, disponibles: 0 };
+            }
+
+            const cantTotal = r.cantidadTotal ?? r.cantidad ?? 1;
+            const cantDisp = r.cantidadDisponible ?? (r.disponible === true ? cantTotal : 0);
+
+            agrupados[tipo].total += Number.isFinite(cantTotal) ? cantTotal : 0;
+            agrupados[tipo].disponibles += Number.isFinite(cantDisp) ? cantDisp : 0;
+        });
+
+        Object.entries(agrupados).forEach(([tipo, data]) => {
+            const porc = data.total ? Math.round((data.disponibles / data.total) * 100) : 0;
+
+            const card = document.createElement('div');
+            card.className = 'resource-card';
+            card.innerHTML = `
+                <div class="resource-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="resource-type">${tipo}</div>
+                <div class="resource-amount">${data.total}</div>
+                <div style="font-size: 0.85rem; margin-bottom: 6px;">
+                    ${data.disponibles} disponibles (${porc}%)
+                </div>
+                <div class="resource-progress">
+                    <div class="resource-progress-bar" style="width: ${porc}%;"></div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+    }
+
+    function renderEquiposInicio(equiposData) {
+        const cont = document.getElementById('equiposDisplay');
+
+        if (!Array.isArray(equiposData) || equiposData.length === 0) {
+            cont.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No hay equipos registrados</h3>
+                </div>`;
+            return;
+        }
+
+        cont.innerHTML = '';
+
+        equiposData.forEach(eq => {
+            const nombre = eq.nombre || eq.nombreEquipo || ('Equipo #' + (eq.id ?? ''));
+            const tipo = eq.tipo || eq.tipoEquipo || 'Sin tipo';
+            const estado = normalizarEstado(eq.estado || 'DESCONOCIDO');
+            const eficiencia = eq.porcentajeEficiencia ?? eq.eficiencia ?? null;
+
+            let statusClass = 'status-transito';
+            if (estado === 'DISPONIBLE') statusClass = 'status-disponible';
+            else if (['EN_OPERACION', 'OPERACION', 'ACTIVO'].includes(estado)) statusClass = 'status-operacion';
+
+            const card = document.createElement('div');
+            card.className = 'team-card';
+            card.innerHTML = `
+                <div class="team-info">
+                    <div class="team-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="team-details">
+                        <div class="team-name">${nombre}</div>
+                        <div class="team-type">${tipo}</div>
+                    </div>
+                </div>
+                <div class="team-status">
+                    <span class="status-badge ${statusClass}">${estado}</span>
+                    <div class="efficiency-bar">
+                        <div class="efficiency-fill" style="width: ${eficiencia != null ? Math.max(0, Math.min(100, eficiencia)) : 50}%;"></div>
+                    </div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+    }
+
+    //=========================================================
+    // ESTADISTICAS CON GRAFICAS
+    //=========================================================
+    async function loadEstadisticasTab() {
+        try {
+            const response = await fetch(`${API_URL}/estadisticas`);
+            const stats = await response.json();
+
+            document.getElementById('statsTotalZonas').textContent = stats.totalZonas || 0;
+            document.getElementById('statsTotalRecursos').textContent = stats.totalRecursos || 0;
+            document.getElementById('statsTotalEquipos').textContent = stats.totalEquipos || 0;
+            document.getElementById('statsTotalEvacuaciones').textContent = stats.totalEvacuaciones || 0;
+
+            renderCharts(stats);
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    function renderCharts(stats) {
+        destroyCharts();
+
+        if (stats.zonasPorUrgencia) {
+            renderZonasChart(stats.zonasPorUrgencia);
+        }
+
+        if (stats.recursosPorTipo) {
+            renderRecursosChart(stats.recursosPorTipo);
+        }
+
+        if (stats.equiposPorEstado) {
+            renderEquiposChart(stats.equiposPorEstado);
+        }
+
+        if (stats.porcentajeEvacuacionesCompletadas !== undefined) {
+            renderEvacuacionesChart(stats);
+        }
+    }
+
+    function destroyCharts() {
+        if (window.zonasChart) window.zonasChart.destroy();
+        if (window.recursosChart) window.recursosChart.destroy();
+        if (window.equiposChart) window.equiposChart.destroy();
+        if (window.evacuacionesChart) window.evacuacionesChart.destroy();
+    }
+
+    function renderZonasChart(zonasPorUrgencia) {
+        const ctx = document.getElementById('chartZonasUrgencia').getContext('2d');
+        const labels = Object.keys(zonasPorUrgencia);
+        const data = Object.values(zonasPorUrgencia);
+        
+        const backgroundColors = labels.map(label => {
+            switch(label.toUpperCase()) {
+                case 'CRÍTICA': return '#F44336';
+                case 'ALTA': return '#FF9800';
+                case 'MEDIA': return '#FFC107';
+                case 'BAJA': return '#4CAF50';
+                default: return '#9E9E9E';
+            }
+        });
+
+        window.zonasChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Zonas por Nivel de Urgencia',
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors.map(color => color),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderRecursosChart(recursosPorTipo) {
+        const ctx = document.getElementById('chartRecursosTipo').getContext('2d');
+        const labels = Object.keys(recursosPorTipo);
+        const data = Object.values(recursosPorTipo);
+        
+        window.recursosChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+
+    function renderEquiposChart(equiposPorEstado) {
+        const ctx = document.getElementById('chartEquiposEstado').getContext('2d');
+        const labels = Object.keys(equiposPorEstado);
+        const data = Object.values(equiposPorEstado);
+        
+        window.equiposChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#4CAF50', '#2196F3', '#FF9800', 
+                        '#9C27B0', '#607D8B', '#F44336'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+
+    function renderEvacuacionesChart(stats) {
+        const ctx = document.getElementById('chartEvacuacionesProgreso').getContext('2d');
+        const completadas = stats.porcentajeEvacuacionesCompletadas || 0;
+        const pendientes = 100 - completadas;
+
+        window.evacuacionesChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completadas', 'Pendientes'],
+                datasets: [{
+                    data: [completadas, pendientes],
+                    backgroundColor: ['#4CAF50', '#FFC107'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle"></i>
+            ${message}
+        `;
+        
+        if (!document.querySelector('#notification-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'notification-styles';
+            styles.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 6px;
+                    color: white;
+                    z-index: 10000;
+                    max-width: 300px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    animation: slideIn 0.3s ease;
+                }
+                .notification.success { background: #4CAF50; }
+                .notification.error { background: #F44336; }
+                .notification.info { background: #2196F3; }
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    function logout() {
+        if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+            currentUser = null;
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
         }
     }
 </script>
