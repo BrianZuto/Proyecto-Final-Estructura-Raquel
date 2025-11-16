@@ -2509,38 +2509,6 @@ if (data.success) {
         element.style.display = 'block';
         setTimeout(() => element.style.display = 'none', 5000);
     }
-    
-    // Cambiar de pestaña
-function switchTab(tabName) {
-    // 1. Activar botón correcto
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
-
-    // 2. Mostrar contenido correcto
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.toggle('active', tab.id === tabName + '-tab');
-    });
-
-    // 3. Si es la pestaña del mapa, inicializarlo/refrescarlo
-    if (tabName === 'mapa') {
-        setTimeout(() => {
-            if (!map) {
-                initializeMap();
-            } else {
-                map.invalidateSize();
-            }
-        }, 100);
-    }
-
-    // 4. Si es la pestaña de inicio, recargar datos del dashboard
-    if (tabName === 'inicio') {
-        loadInicioData();
-    }
-    // 5. Si es la pestaña de estadísticas, cargar las gráficas
-if (tabName === 'estadisticas') {
-    loadEstadisticasTab();
-}
 
 async function loadEstadisticasTab() {
     try {
@@ -2818,8 +2786,6 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.remove();
     }, 5000);
-}
-
 }
     // ==========================================================
     //   CARGA DE DATOS PARA LA PESTAÑA INICIO
@@ -3989,52 +3955,68 @@ function showMap() {
             showNotification("Árbol limpiado", "success");
         }
     }
-
-    // ==========================================================
-    // MODIFICAR switchTab para inicializar el arbol
-    // ==========================================================
+    //=========================================================
+    // FUNCIONES SWITCH DE PESTAÑAS
+    //=========================================================
     function switchTab(tabName) {
-        // Activar botón correcto
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tabName);
-        });
+    // 1. Activar botón principal correcto
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
 
-        // Mostrar contenido correcto
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.toggle('active', tab.id === tabName + '-tab');
-        });
+    // 2. Mostrar contenido de pestaña principal correcto
+    //    (inicio-tab, admin-tab, rutas-tab, estadisticas-tab, arbol-tab, mapa-tab)
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.toggle('active', tab.id === tabName + '-tab');
+    });
 
-        // Inicializar según la pestaña
-        if (tabName === 'mapa') {
-            setTimeout(() => {
-                if (!map) {
-                    initializeMap();
-                } else {
-                    map.invalidateSize();
-                }
-            }, 100);
-        }
-
-        if (tabName === 'inicio') {
-            loadInicioData();
-        }
-
-        if (tabName === 'estadisticas') {
-            loadEstadisticasTab();
-        }
-
-        // NUEVO: Inicializar árbol D3
-        if (tabName === 'arbol') {
-            setTimeout(() => {
-                if (!d3Tree) {
-                    initTree();
-                } else {
-                    updateTreeVisualization();
-                }
-            }, 100);
-        }
+    // 3. Inicializar según la pestaña principal
+    // --- MAPA INTERACTIVO ---
+    if (tabName === 'mapa') {
+        setTimeout(() => {
+            if (!map) {
+                initializeMap();
+            } else {
+                map.invalidateSize();
+            }
+        }, 100);
     }
 
+    // --- DASHBOARD DE INICIO ---
+    if (tabName === 'inicio') {
+        loadInicioData();
+    }
+
+    // --- PANEL DE ESTADÍSTICAS ---
+    if (tabName === 'estadisticas') {
+        loadEstadisticasTab();
+    }
+
+    // --- ÁRBOL D3 ---
+    if (tabName === 'arbol') {
+        setTimeout(() => {
+            if (!d3Tree) {
+                initTree();
+            } else {
+                updateTreeVisualization();
+            }
+        }, 100);
+    }
+
+    // --- PANEL DE ADMINISTRACIÓN ---
+    // Aquí eliges la subpestaña por defecto del admin
+    if (tabName === 'admin') {
+        // Ajusta el ID según tu HTML: 'admin-zonas', 'admin-recursos', etc.
+        switchAdminTab('admin-zonas');
+    }
+
+    // --- PANEL DE RUTAS ---
+    // Aquí eliges la subpestaña por defecto del panel de rutas
+    if (tabName === 'rutas') {
+        // Ajusta el ID según tu HTML: por ejemplo 'rutas-general'
+        switchRoutesTab('rutas-general');
+    }
+}
     //=========================================================
     // FUNCIONES ADMINISTRATIVAS
     //=========================================================
