@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Manejador global de excepciones para la API REST
@@ -53,6 +54,36 @@ public class GlobalExceptionHandler {
         error.put("status", 404);
         error.put("message", "El endpoint '" + ex.getRequestURL() + "' no existe.");
         error.put("suggestion", "Verifica la URL y asegúrate de que el endpoint esté correctamente escrito.");
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Maneja errores de recursos estáticos no encontrados (favicon, etc.)
+     * Ignora silenciosamente estos errores para evitar ruido en los logs
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceNotFound(NoResourceFoundException ex) {
+        String resourcePath = ex.getResourcePath();
+        
+        // Ignorar silenciosamente recursos comunes que los navegadores buscan automáticamente
+        if (resourcePath != null && (
+            resourcePath.equals("/favicon.ico") ||
+            resourcePath.startsWith("/.well-known/") ||
+            resourcePath.startsWith("/apple-touch-icon") ||
+            resourcePath.startsWith("/robots.txt") ||
+            resourcePath.startsWith("/sitemap.xml")
+        )) {
+            // Retornar 204 No Content para estos recursos
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        
+        // Para otros recursos estáticos, devolver 404 normal
+        Map<String, Object> error = new HashMap<>();
+        error.put("success", false);
+        error.put("error", "RESOURCE_NOT_FOUND");
+        error.put("status", 404);
+        error.put("message", "Recurso estático no encontrado: " + resourcePath);
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }

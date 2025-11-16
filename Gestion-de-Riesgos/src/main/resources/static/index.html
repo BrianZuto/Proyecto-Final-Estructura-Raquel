@@ -558,9 +558,11 @@
    GRID DE ZONAS
    =================================== */
 .zones-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 10px;
 }
 
 .zone-card {
@@ -569,7 +571,8 @@
     border-radius: 8px;
     padding: 16px;
     transition: all 0.2s;
-    cursor: pointer;
+    min-width: 280px;
+    flex: 0 0 auto;
 }
 
 .zone-card:hover {
@@ -641,9 +644,11 @@
    GRID DE RECURSOS
    =================================== */
 .resources-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 10px;
 }
 
 .resource-card {
@@ -653,6 +658,8 @@
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
     transition: all 0.2s;
+    min-width: 200px;
+    flex: 0 0 auto;
 }
 
 .resource-card:hover {
@@ -891,7 +898,7 @@
     }
     
     .zones-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        flex-wrap: wrap;
     }
 }
 
@@ -924,11 +931,21 @@
     }
     
     .zones-grid {
-        grid-template-columns: 1fr;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
+    .zone-card {
+        min-width: 250px;
     }
     
     .resources-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
+    .resource-card {
+        min-width: 150px;
     }
     
     .actions-grid {
@@ -1491,7 +1508,7 @@
             <div class="section-container">
                 <div class="section-header">
                     <h2><i class="fas fa-list"></i> Zonas Existentes</h2>
-                    <button class="btn-refresh" onclick="loadZonas()">
+                    <button class="btn-refresh" onclick="loadAdminData()">
                         <i class="fas fa-sync-alt"></i> Actualizar
                     </button>
                 </div>
@@ -1549,11 +1566,11 @@
             <div class="section-container">
                 <div class="section-header">
                     <h2><i class="fas fa-warehouse"></i> Recursos Existentes</h2>
-                    <button class="btn-refresh" onclick="loadRecursos()">
+                    <button class="btn-refresh" onclick="loadAdminData()">
                         <i class="fas fa-sync-alt"></i> Actualizar
                     </button>
                 </div>
-                <div id="recursosList">
+                <div id="recursosList" class="resources-grid">
                     <div class="loading-state">
                         <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
                     </div>
@@ -2411,7 +2428,26 @@ function destroyCharts() {
         }
     }
 
+    // Restaurar sesión desde localStorage al cargar la página
     window.addEventListener('load', () => {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            try {
+                currentUser = JSON.parse(savedUser);
+                // Si hay usuario guardado, mostrar el dashboard
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('userInfo').innerHTML = `<i class="fas fa-user"></i> ${currentUser.nombre}`;
+                // Cargar datos del panel de inicio
+                if (typeof loadInicioData === 'function') {
+                    loadInicioData();
+                }
+            } catch (e) {
+                console.error('Error restaurando sesión:', e);
+                localStorage.removeItem('currentUser');
+            }
+        }
+        
         checkApiConnection();
         setInterval(checkApiConnection, 30000);
     });
@@ -2438,6 +2474,8 @@ function destroyCharts() {
 
 if (data.success) {
     currentUser = data.user;
+    // Guardar usuario en localStorage para persistencia de sesión
+    localStorage.setItem('currentUser', JSON.stringify(data.user));
     showMessage('loginSuccess', '¡Inicio de sesión exitoso!');
 
     setTimeout(() => {
@@ -3310,6 +3348,19 @@ function showNotification(message, type = 'info') {
         }
     }
 
+    // Función para recargar zonas sin recargar toda la página
+    async function reloadZonesOnMap() {
+        // Limpiar zonas existentes del mapa
+        zoneCircles.forEach(item => {
+            if (item.circle) map.removeLayer(item.circle);
+            if (item.marker) map.removeLayer(item.marker);
+        });
+        zoneCircles = [];
+        
+        // Recargar zonas desde el servidor
+        await loadZones();
+    }
+
     function createZoneOnMap(zona) {
         const color = getColorByUrgency(zona.nivelUrgencia);
         const radius = zona.radio || 500; // Radio en metros
@@ -3659,8 +3710,8 @@ function showNotification(message, type = 'info') {
                     tempCircle = null;
                 }
 
-                // Recargar zonas
-                location.reload();
+                // Recargar zonas sin recargar toda la página
+                reloadZonesOnMap();
             } else {
                 alert('Error: ' + result.message);
             }
@@ -3684,6 +3735,8 @@ function showMap() {
     function logout() {
         if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
             currentUser = null;
+            // Limpiar localStorage al cerrar sesión
+            localStorage.removeItem('currentUser');
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('username').value = '';
@@ -4202,36 +4255,60 @@ if (tabName === 'rutas') {
             }
         });
     }
+    let isLoadingAdminData = false;
     async function loadAdminData() {
-    try {
-        // Cargar todo lo necesario para el panel de administración
-        const [zonasRes, recursosRes, equiposRes, usuariosRes, asignacionesRes] =
-            await Promise.all([
-                fetch(`${API_URL}/zonas`),
-                fetch(`${API_URL}/recursos`),
-                fetch(`${API_URL}/equipos`),
-                fetch(`${API_URL}/usuarios`),
-                fetch(`${API_URL}/asignaciones`)
-            ]);
+        // Prevenir múltiples llamadas simultáneas
+        if (isLoadingAdminData) {
+            console.log('loadAdminData ya está en ejecución, ignorando llamada duplicada');
+            return;
+        }
+        
+        isLoadingAdminData = true;
+        try {
+            // Cargar todo lo necesario para el panel de administración
+            const [zonasRes, recursosRes, equiposRes] =
+                await Promise.all([
+                    fetch(`${API_URL}/zonas`).catch(e => ({ ok: false, json: () => Promise.resolve([]) })),
+                    fetch(`${API_URL}/recursos`).catch(e => ({ ok: false, json: () => Promise.resolve([]) })),
+                    fetch(`${API_URL}/equipos`).catch(e => ({ ok: false, json: () => Promise.resolve([]) }))
+                ]);
 
-        // Guardar en las variables globales (que ya definimos)
-        zonasData        = await zonasRes.json();
-        recursosData     = await recursosRes.json();
-        equiposData      = await equiposRes.json();
-        usuariosData     = await usuariosRes.json();
-        asignacionesData = await asignacionesRes.json();
+            // Guardar en las variables globales (que ya definimos)
+            if (zonasRes.ok) {
+                zonasData = await zonasRes.json();
+            } else {
+                zonasData = [];
+            }
+            
+            if (recursosRes.ok) {
+                recursosData = await recursosRes.json();
+            } else {
+                recursosData = [];
+            }
+            
+            if (equiposRes.ok) {
+                equiposData = await equiposRes.json();
+            } else {
+                equiposData = [];
+            }
 
-        // Pintar cada sección del panel
-        renderZonasAdminTable();
-        renderRecursosAdminTable();
-        renderEquiposAdminTable();
-        renderUsuariosAdminTable();
-        renderAsignacionesAdminTable();
-    } catch (error) {
-        console.error('Error cargando datos del panel de administración:', error);
-        // Si tienes showMessage, úsala; si no, esta línea se puede quitar:
-        showMessage('globalMessage', 'Error cargando datos del panel de administración');
-    }}
+            // Inicializar arrays vacíos para usuarios y asignaciones (endpoints no implementados)
+            usuariosData = [];
+            asignacionesData = [];
+
+            // Pintar cada sección del panel
+            renderZonasAdminTable();
+            renderRecursosAdminTable();
+            renderEquiposAdminTable();
+            renderUsuariosAdminTable();
+            renderAsignacionesAdminTable();
+        } catch (error) {
+            console.error('Error cargando datos del panel de administración:', error);
+            showNotification('Error cargando datos del panel de administración', 'error');
+        } finally {
+            isLoadingAdminData = false;
+        }
+    }
     async function handleAdminZoneSubmit(e) {
     e.preventDefault();
 
@@ -4390,8 +4467,8 @@ async function handleAdminResourceSubmit(e) {
         nombre: document.getElementById('resourceName').value.trim(),
         tipo: document.getElementById('resourceType').value,
         cantidad: parseInt(document.getElementById('resourceQuantity').value || '0', 10),
-        unidad: document.getElementById('resourceUnit').value.trim(),
-        zonaId: document.getElementById('resourceLocation').value.trim() || null
+        unidadMedida: document.getElementById('resourceUnit').value.trim(),
+        ubicacionId: document.getElementById('resourceLocation').value.trim() || null
     };
 
     if (!payload.id || !payload.nombre) {
@@ -5551,6 +5628,8 @@ async function loadEvacuaciones() {
     function logout() {
         if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
             currentUser = null;
+            // Limpiar localStorage al cerrar sesión
+            localStorage.removeItem('currentUser');
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('username').value = '';
@@ -5753,76 +5832,6 @@ async function handleAdminTeamSubmit(e) {
     }
 }
 
-// CARGAR DATOS DEL PANEL ADMIN
-async function loadAdminData() {
-    try {
-        const [zonasRes, recursosRes, equiposRes] = await Promise.all([
-            fetch(`${API_URL}/zonas`),
-            fetch(`${API_URL}/recursos`),
-            fetch(`${API_URL}/equipos`)
-        ]);
-
-        const zonas = await zonasRes.json();
-        const recursos = await recursosRes.json();
-        const equipos = await equiposRes.json();
-
-        // Renderizar listas (implementar según necesites)
-        renderZonasAdminTable(zonas);
-        renderRecursosAdminTable(recursos);
-        renderEquiposAdminTable(equipos);
-
-    } catch (error) {
-        console.error('Error cargando datos del panel:', error);
-    }
-}
-
-// FUNCIONES DE RENDERIZADO (EJEMPLO)
-function renderZonasAdminTable(zonas) {
-    const container = document.getElementById('zonasList');
-    if (!container) return;
-
-    if (!Array.isArray(zonas) || zonas.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-map-marked-alt"></i>
-                <h3>No hay zonas registradas</h3>
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = '';
-    zonas.forEach(z => {
-        const card = document.createElement('div');
-        card.className = 'zone-card';
-        card.innerHTML = `
-            <div class="zone-header">
-                <div class="zone-title">${z.nombre}</div>
-                <div class="zone-urgency urgency-${z.nivelUrgencia.toLowerCase()}">${z.nivelUrgencia}</div>
-            </div>
-            <div class="zone-info">
-                <div class="zone-info-item">
-                    <i class="fas fa-id-card"></i>
-                    <span><strong>ID:</strong> ${z.id}</span>
-                </div>
-                <div class="zone-info-item">
-                    <i class="fas fa-users"></i>
-                    <span><strong>Población:</strong> ${z.poblacionAfectada}</span>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-function renderRecursosAdminTable(recursos) {
-    // Similar a zonas
-    console.log('Renderizando recursos:', recursos);
-}
-
-function renderEquiposAdminTable(equipos) {
-    // Similar a zonas
-    console.log('Renderizando equipos:', equipos);
-}
 
 </script>
 </body>

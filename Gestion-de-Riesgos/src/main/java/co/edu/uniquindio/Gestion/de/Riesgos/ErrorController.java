@@ -25,13 +25,16 @@ public class ErrorController implements org.springframework.boot.web.servlet.err
         Object exception = request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
         Object requestUri = request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);
         
-        // Ignorar errores de archivos estáticos (HTML, CSS, JS, imágenes)
+        // Ignorar errores de archivos estáticos comunes (favicon, etc.)
         if (requestUri != null) {
             String uri = requestUri.toString();
-            if (uri.endsWith(".html") || uri.endsWith(".css") || uri.endsWith(".js") || 
-                uri.endsWith(".png") || uri.endsWith(".jpg") || uri.endsWith(".ico")) {
-                // Dejar que Spring maneje los archivos estáticos normalmente
-                return null;
+            if (uri.equals("/favicon.ico") || 
+                uri.startsWith("/.well-known/") ||
+                uri.endsWith(".html") || uri.endsWith(".css") || uri.endsWith(".js") || 
+                uri.endsWith(".png") || uri.endsWith(".jpg") || uri.endsWith(".ico") ||
+                uri.equals("/robots.txt") || uri.equals("/sitemap.xml")) {
+                // Retornar 204 No Content para estos recursos
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
             }
         }
 
