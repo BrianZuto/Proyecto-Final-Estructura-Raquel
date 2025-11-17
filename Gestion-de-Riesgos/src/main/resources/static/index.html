@@ -1526,61 +1526,67 @@
 
         <!-- Gestión de Recursos -->
         <div id="gestion-recursos" class="admin-tab-content">
-            <div class="section-container">
-                <div class="section-header">
-                    <h2><i class="fas fa-boxes"></i> Crear Nuevo Recurso</h2>
-                </div>
-                <form id="createResourceForm" class="two-column">
-                    <div class="input-group">
-                        <label>ID del Recurso *</label>
-                        <input type="text" id="resourceId" required placeholder="ej. R004">
-                    </div>
-                    <div class="input-group">
-                        <label>Nombre *</label>
-                        <input type="text" id="resourceName" required placeholder="ej. Agua Potable">
-                    </div>
-                    <div class="input-group">
-                        <label>Tipo *</label>
-                        <select id="resourceType" required>
-                            <option value="ALIMENTOS">Alimentos</option>
-                            <option value="MEDICINAS">Medicinas</option>
-                            <option value="EQUIPOS">Equipos</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Cantidad *</label>
-                        <input type="number" id="resourceQuantity" required min="1" value="1">
-                    </div>
-                    <div class="input-group">
-                        <label>Unidad de Medida *</label>
-                        <input type="text" id="resourceUnit" required placeholder="litros, kg, unidades...">
-                    </div>
-                    <div class="input-group">
-                        <label>Ubicación (ID Zona)</label>
-                        <input type="text" id="resourceLocation" placeholder="Z001">
-                    </div>
-                    <div class="input-group" style="grid-column: 1 / -1;">
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-plus-circle"></i> Crear Recurso
-                        </button>
-                    </div>
-                </form>
+    <div class="section-container">
+        <div class="section-header">
+            <h2><i class="fas fa-boxes"></i> Crear Nuevo Recurso</h2>
+        </div>
+        <form id="createResourceForm" class="two-column">
+            <div class="input-group">
+                <label>ID del Recurso *</label>
+                <input type="text" id="resourceId" required placeholder="ej. R004">
             </div>
+            <div class="input-group">
+                <label>Nombre *</label>
+                <input type="text" id="resourceName" required placeholder="ej. Agua Potable">
+            </div>
+            <div class="input-group">
+                <label>Tipo *</label>
+                <select id="resourceType" required>
+                    <option value="ALIMENTOS">Alimentos</option>
+                    <option value="MEDICINAS">Medicinas</option>
+                    <option value="EQUIPOS">Equipos</option>
+                    <option value="AGUA">Agua</option>
+                    <option value="ROPA">Ropa</option>
+                    <option value="REFUGIO">Refugio</option>
+                    <option value="ENERGIA">Energía</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Cantidad *</label>
+                <input type="number" id="resourceQuantity" required min="1" value="1">
+            </div>
+            <div class="input-group">
+                <label>Unidad de Medida *</label>
+                <input type="text" id="resourceUnit" required placeholder="litros, kg, unidades...">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-map-marker-alt"></i> Asignar a Zona</label>
+                <select id="resourceLocation">
+                    <option value="">📦 Almacén Central (Sin asignar)</option>
+                </select>
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i> Crear Recurso
+                </button>
+            </div>
+        </form>
+    </div>
 
-            <div class="section-container">
-                <div class="section-header">
-                    <h2><i class="fas fa-warehouse"></i> Recursos Existentes</h2>
-                    <button class="btn-refresh" onclick="loadAdminData()">
-                        <i class="fas fa-sync-alt"></i> Actualizar
-                    </button>
-                </div>
-                <div id="recursosList" class="resources-grid">
-                    <div class="loading-state">
-                        <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
-                    </div>
-                </div>
+    <div class="section-container">
+        <div class="section-header">
+            <h2><i class="fas fa-warehouse"></i> Recursos Existentes</h2>
+            <button class="btn-refresh" onclick="loadAdminData()">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+        <div id="recursosList" class="resources-grid">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i> Cargando recursos...
             </div>
         </div>
+    </div>
+</div>
 
         <!-- Gestión de Equipos -->
         <div id="gestion-equipos" class="admin-tab-content">
@@ -1925,7 +1931,7 @@
         <!-- Resumen numérico rápido -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#667eea,#764ba2);">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#667eea,#764ba2);">
                     <i class="fas fa-map-marker-alt"></i>
                 </div>
                 <div class="stat-info">
@@ -1935,7 +1941,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#f093fb,#f5576c);">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#f093fb,#f5576c);">
                     <i class="fas fa-boxes"></i>
                 </div>
                 <div class="stat-info">
@@ -1945,7 +1951,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#4facfe,#00f2fe);">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#4facfe,#00f2fe);">
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-info">
@@ -1955,7 +1961,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#43e97b,#38f9d7);">
+                <div class="stat-icon" style="background: linear-gradient(135deg,#43e97b,#38f9d7);">
                     <i class="fas fa-ambulance"></i>
                 </div>
                 <div class="stat-info">
@@ -1999,74 +2005,6 @@
     </div>
 </div>
 
-        <!-- Resumen numérico rápido -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(45deg,#667eea,#764ba2);">
-                    <i class="fas fa-map-marker-alt"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="statsTotalZonas">0</div>
-                    <div class="stat-label">Zonas registradas</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#f093fb,#f5576c);">
-                    <i class="fas fa-boxes"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="statsTotalRecursos">0</div>
-                    <div class="stat-label">Recursos totales</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#4facfe,#00f2fe);">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="statsTotalEquipos">0</div>
-                    <div class="stat-label">Equipos de rescate</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(100deg,#43e97b,#38f9d7);">
-                    <i class="fas fa-ambulance"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="statsTotalEvacuaciones">0</div>
-                    <div class="stat-label">Evacuaciones planificadas</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gráfica: Zonas por nivel de urgencia -->
-        <div class="section-container">
-            <div class="section-header">
-                <h2><i class="fas fa-exclamation-triangle"></i> Zonas por nivel de urgencia</h2>
-            </div>
-            <canvas id="chartZonasUrgencia" height="120"></canvas>
-        </div>
-
-        <!-- Gráfica: Recursos por tipo -->
-        <div class="section-container">
-            <div class="section-header">
-                <h2><i class="fas fa-warehouse"></i> Recursos por tipo</h2>
-            </div>
-            <canvas id="chartRecursosTipo" height="120"></canvas>
-        </div>
-
-        <!-- Gráfica: Equipos por estado -->
-        <div class="section-container">
-            <div class="section-header">
-                <h2><i class="fas fa-user-shield"></i> Equipos por estado</h2>
-            </div>
-            <canvas id="chartEquiposEstado" height="120"></canvas>
-        </div>
-    </div>
-</div>
 
 <!-- ============================================ -->
 <!-- PESTAÑA: MAPA INTERACTIVO -->
@@ -2212,18 +2150,10 @@
                         </form>
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px;">
-                            <button class="btn-action" onclick="treeExpandAll()">
-                                <i class="fas fa-expand-alt"></i> Expandir Todo
+                            <button class=""btn-action" onclick="manualUpdateTree()" style="background: #48bb78;">
+                            <i class="fas fa-sync-alt"></i> Actualizar Árbol
                             </button>
-                            <button class="btn-action" onclick="treeCollapseAll()">
-                                <i class="fas fa-compress-alt"></i> Contraer Todo
-                            </button>
-                            <button class="btn-action" onclick="treeLoadFromApi()" style="background: #48bb78;">
-                                <i class="fas fa-sync-alt"></i> Cargar de API
-                            </button>
-                            <button class="btn-action" onclick="treeClearAll()" style="background: #f56565; color: white;">
-                                <i class="fas fa-trash"></i> Limpiar Todo
-                            </button>
+
                         </div>
                     </div>
 
@@ -2592,25 +2522,40 @@ if (data.success) {
 // PANEL DE ESTADÍSTICAS — TOTALMENTE FUNCIONAL
 // ===========================================================
 
-async function loadEstadisticasTab() {
+    async function loadEstadisticasTab() {
 
-    console.log("Cargando estadísticas del sistema…");
+        console.log("Cargando estadísticas del sistema…");
 
-    try {
-        // 1. Obtener datos
-        const resp = await fetch(`${API_URL}/estadisticas`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        try {
+            // 1. Obtener datos actualizados directamente
+            const [zonasRes, recursosRes, equiposRes, evacRes] = await Promise.all([
+                fetch(`${API_URL}/zonas`).catch(() => ({ ok: false, json: () => Promise.resolve([]) })),
+                fetch(`${API_URL}/recursos`).catch(() => ({ ok: false, json: () => Promise.resolve([]) })),
+                fetch(`${API_URL}/equipos`).catch(() => ({ ok: false, json: () => Promise.resolve([]) })),
+                fetch(`${API_URL}/evacuaciones`).catch(() => ({ ok: false, json: () => Promise.resolve([]) }))
+            ]);
 
-        const stats = await resp.json();
+            const [zonasDataActual, recursosDataActual, equiposDataActual, evacDataActual] = await Promise.all([
+                zonasRes.ok ? zonasRes.json() : [],
+                recursosRes.ok ? recursosRes.json() : [],
+                equiposRes.ok ? equiposRes.json() : [],
+                evacRes.ok ? evacRes.json() : []
+            ]);
 
-        // ============================================
-        // 1. ACTUALIZAR TARJETAS DEL RESUMEN NUMÉRICO
-        // ============================================
+            // Actualizar variables globales
+            zonas = zonasDataActual;
+            recursos = recursosDataActual;
+            equipos = equiposDataActual;
+            evacuaciones = evacDataActual;
 
-        document.getElementById("statsTotalZonas").textContent = zonas.length;
-        document.getElementById("statsTotalRecursos").textContent = recursos.length;
-        document.getElementById("statsTotalEquipos").textContent = equipos.length;
-        document.getElementById("statsTotalEvacuaciones").textContent = evacuaciones.length;
+            // ============================================
+            // 1. ACTUALIZAR TARJETAS DEL RESUMEN NUMÉRICO
+            // ============================================
+
+            document.getElementById("statsTotalZonas").textContent = zonas.length;
+            document.getElementById("statsTotalRecursos").textContent = recursos.length;
+            document.getElementById("statsTotalEquipos").textContent = equipos.length;
+            document.getElementById("statsTotalEvacuaciones").textContent = evacuaciones.length;
 
         // ============================================
         // 2. CALCULAR DATOS PARA GRÁFICAS
@@ -3762,6 +3707,9 @@ function showMap() {
     function initTree() {
         treeSvg = d3.select("#tree-svg");
         
+        // Limpiar cualquier contenido previo
+        treeSvg.selectAll("*").remove();
+        
         treeZoom = d3.zoom()
             .scaleExtent([0.1, 3])
             .on("zoom", (event) => {
@@ -3777,7 +3725,6 @@ function showMap() {
             .size([treeWidth - 200, treeHeight - 100])
             .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
 
-        updateTreeVisualization();
         loadTreeResources();
     }
 
@@ -4177,74 +4124,290 @@ function showMap() {
             showNotification("Árbol limpiado", "success");
         }
     }
+
+    // ========================================================
+    // GENERACIÓN AUTOMÁTICA DEL ÁRBOL DESDE RECURSOS
+    // ========================================================
+    
+    async function updateTreeFromResources() {
+    try {
+        console.log('🌳 ========================================');
+        console.log('🌳 INICIANDO ACTUALIZACIÓN DEL ÁRBOL');
+        console.log('🌳 ========================================');
+        
+        // Obtener recursos y zonas desde el servidor
+        const [recursosRes, zonasRes] = await Promise.all([
+            fetch(`${API_URL}/recursos`).catch(err => {
+                console.error('❌ Error fetch recursos:', err);
+                return { ok: false };
+            }),
+            fetch(`${API_URL}/zonas`).catch(err => {
+                console.error('❌ Error fetch zonas:', err);
+                return { ok: false };
+            })
+        ]);
+
+        if (!recursosRes.ok) {
+            console.log('❌ No se pudo obtener recursos');
+            showNotification('No se pudieron cargar los recursos', 'error');
+            return;
+        }
+        
+        if (!zonasRes.ok) {
+            console.log('❌ No se pudo obtener zonas');
+            showNotification('No se pudieron cargar las zonas', 'error');
+            return;
+        }
+
+        const recursosArbol = await recursosRes.json();
+        const zonasArbol = await zonasRes.json();
+
+        console.log('📦 Recursos obtenidos:', recursosArbol.length);
+        console.log('📦 Datos recursos:', recursosArbol);
+        console.log('🗺️ Zonas obtenidas:', zonasArbol.length);
+        console.log('🗺️ Datos zonas:', zonasArbol);
+
+        // Limpiar árbol actual
+        treeData = {
+            id: "root",
+            name: "🏢 Centro de Distribución Principal",
+            quantity: 0,
+            priority: 10,
+            children: []
+        };
+
+        // Si no hay recursos, mostrar mensaje
+        if (!recursosArbol || recursosArbol.length === 0) {
+            console.log('⚠️ No hay recursos en el sistema');
+            treeData.children.push({
+                id: "empty",
+                name: "⚠️ No hay recursos para distribuir",
+                quantity: 0,
+                priority: 5,
+                children: []
+            });
+            
+            if (currentTab === 'arbol' && d3Tree) {
+                updateTreeVisualization();
+            }
+            showNotification('No hay recursos para mostrar en el árbol', 'info');
+            return;
+        }
+
+        // Agrupar recursos por zona
+        const recursosPorZona = {};
+        
+        recursosArbol.forEach(recurso => {
+            // Intentar múltiples formas de obtener la zona
+            const zonaId = recurso.ubicacionId || recurso.zonaId || recurso.ubicacion || 'sin-asignar';
+            
+            console.log(`📌 Recurso "${recurso.nombre}" → Zona "${zonaId}"`);
+            
+            if (!recursosPorZona[zonaId]) {
+                recursosPorZona[zonaId] = [];
+            }
+            
+            recursosPorZona[zonaId].push(recurso);
+        });
+
+        console.log('📊 Recursos agrupados por zona:');
+        Object.entries(recursosPorZona).forEach(([zona, recursos]) => {
+            console.log(`   Zona "${zona}": ${recursos.length} recursos`);
+        });
+
+        let totalRecursos = 0;
+
+        // Crear nodos por zona
+        Object.entries(recursosPorZona).forEach(([zonaId, recursosZona]) => {
+            const zona = zonasArbol.find(z => String(z.id) === String(zonaId));
+            
+            let nombreZona;
+            if (zonaId === 'sin-asignar') {
+                nombreZona = '📦 Almacén Central (Sin Asignar)';
+            } else if (zona) {
+                nombreZona = `📍 ${zona.nombre}`;
+            } else {
+                nombreZona = `📍 Zona ${zonaId}`;
+            }
+            
+            // Crear nodo para la zona
+            const nodoZona = {
+                id: `zona-${zonaId}`,
+                name: nombreZona,
+                quantity: 0,
+                priority: zona ? getPriorityFromUrgency(zona.nivelUrgencia) : 5,
+                children: []
+            };
+
+            // Agregar recursos como hijos de la zona
+            recursosZona.forEach(recurso => {
+                const cantidad = recurso.cantidadDisponible || recurso.cantidad || 0;
+                const tipo = recurso.tipo || recurso.tipoRecurso || 'N/A';
+                
+                nodoZona.children.push({
+                    id: `recurso-${recurso.id}`,
+                    name: `${getResourceIcon(tipo)} ${recurso.nombre} (${cantidad} ${recurso.unidadMedida || 'uds'})`,
+                    quantity: cantidad,
+                    priority: nodoZona.priority,
+                    resourceId: recurso.id,
+                    children: []
+                });
+                
+                nodoZona.quantity += cantidad;
+            });
+
+            console.log(`✅ Nodo creado: "${nombreZona}" con ${nodoZona.children.length} recursos (Total: ${nodoZona.quantity})`);
+
+            treeData.children.push(nodoZona);
+            totalRecursos += nodoZona.quantity;
+        });
+
+        treeData.quantity = totalRecursos;
+
+        console.log('🎯 ÁRBOL GENERADO EXITOSAMENTE:');
+        console.log(`   Total de zonas: ${treeData.children.length}`);
+        console.log(`   Total de recursos: ${totalRecursos}`);
+        console.log('   Estructura:', treeData);
+
+        // Actualizar visualización si estamos en la pestaña del árbol
+        if (currentTab === 'arbol' && d3Tree) {
+            console.log('🎨 Actualizando visualización del árbol...');
+            updateTreeVisualization();
+        }
+        
+        showNotification(`Árbol actualizado: ${treeData.children.length} zonas, ${totalRecursos} recursos`, 'success');
+        
+    } catch (error) {
+        console.error('❌ ERROR CRÍTICO en updateTreeFromResources:', error);
+        console.error('Stack trace:', error.stack);
+        
+        // Mostrar mensaje de error en el árbol
+        treeData = {
+            id: "root",
+            name: "🏢 Centro de Distribución Principal",
+            quantity: 0,
+            priority: 10,
+            children: [{
+                id: "error",
+                name: "❌ Error al cargar datos del árbol",
+                quantity: 0,
+                priority: 5,
+                children: []
+            }]
+        };
+        
+        if (currentTab === 'arbol' && d3Tree) {
+            updateTreeVisualization();
+        }
+        
+        showNotification('Error al generar el árbol de distribución', 'error');
+    }
+}
+
+// Función auxiliar para iconos de recursos
+function getResourceIcon(tipo) {
+    const iconos = {
+        'ALIMENTOS': '🍞',
+        'MEDICINAS': '💊',
+        'AGUA': '💧',
+        'EQUIPOS': '🔧',
+        'ROPA': '👕',
+        'REFUGIO': '⛺',
+        'ENERGIA': '⚡'
+    };
+    return iconos[tipo.toUpperCase()] || '📦';
+}
+
+async function manualUpdateTree() {
+    console.log('🔄 Actualización manual del árbol solicitada');
+    showNotification('Actualizando árbol...', 'info');
+    await updateTreeFromResources();
+}
+
+    // Función auxiliar para convertir urgencia en prioridad
+    function getPriorityFromUrgency(urgencia) {
+        if (!urgencia) return 5;
+        
+        switch(urgencia.toUpperCase()) {
+            case 'CRITICA': return 10;
+            case 'ALTA': return 8;
+            case 'MEDIA': return 5;
+            case 'BAJA': return 3;
+            default: return 5;
+        }
+    }
+
+    // Actualizar árbol cuando se carga la pestaña
+async function loadArbolTab() {
+    // Inicializar el SVG del árbol si no existe
+    if (!d3Tree) {
+        initTree();
+    }
+    
+    // Cargar recursos y generar el árbol
+    await updateTreeFromResources();
+    
+    // Forzar actualización de la visualización
+    setTimeout(() => {
+        updateTreeVisualization();
+    }, 100);
+}
     //=========================================================
     // FUNCIONES SWITCH DE PESTAÑAS
     //=========================================================
     function switchTab(tabName) {
-    // Actualizar la pestaña actual
-    currentTab = tabName;
-    
-    // 1. Activar botón principal correcto
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
+        // Actualizar la pestaña actual
+        currentTab = tabName;
+        
+        // 1. Activar botón principal correcto
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
 
-    // 2. Mostrar contenido de pestaña principal correcto
-    //    (inicio-tab, admin-tab, rutas-tab, estadisticas-tab, arbol-tab, mapa-tab)
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.toggle('active', tab.id === tabName + '-tab');
-    });
+        // 2. Mostrar contenido de pestaña principal correcto
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.toggle('active', tab.id === tabName + '-tab');
+        });
 
-    // 3. Inicializar según la pestaña principal
-    // --- MAPA INTERACTIVO ---
-    if (tabName === 'mapa') {
-        setTimeout(() => {
-            if (!map) {
-                initializeMap();
-            } else {
-                map.invalidateSize();
-            }
-        }, 100);
+        // 3. Inicializar según la pestaña principal
+        if (tabName === 'mapa') {
+            setTimeout(() => {
+                if (!map) {
+                    initializeMap();
+                } else {
+                    map.invalidateSize();
+                }
+            }, 100);
+        }
+
+        if (tabName === 'inicio') {
+            loadInicioData();
+        }
+
+        if (tabName === 'estadisticas') {
+            setTimeout(() => {
+                loadEstadisticasTab();
+            }, 100);
+        }
+
+        if (tabName === 'arbol') {
+            setTimeout(() => {
+                loadArbolTab();
+            }, 100);
+        }
+
+        if (tabName === 'admin') {
+            setTimeout(() => {
+                loadAdminData();
+                switchAdminTab('gestion-zonas');
+            }, 100);
+        }
+
+        if (tabName === 'rutas') {
+            switchRoutesTab('crear-rutas');
+            setTimeout(() => initRutasPanel(), 100);
+        }
     }
-
-    // --- DASHBOARD DE INICIO ---
-    if (tabName === 'inicio') {
-        loadInicioData();
-    }
-
-    // --- PANEL DE ESTADÍSTICAS ---
-    if (tabName === 'estadisticas') {
-        setTimeout(() => {
-            loadEstadisticasTab();
-        }, 100);
-    }
-
-    // --- ÁRBOL D3 ---
-    if (tabName === 'arbol') {
-        setTimeout(() => {
-            if (!d3Tree) {
-                initTree();
-            } else {
-                updateTreeVisualization();
-            }
-        }, 100);
-    }
-
-    // --- PANEL DE ADMINISTRACIÓN ---
-    if (tabName === 'admin') {
-        setTimeout(() => loadAdminData(), 100);
-    }
-    // 2. Seleccionar automáticamente la pestaña "Zonas"
-    switchAdminTab('gestion-zonas');
-
-    // --- PANEL DE RUTAS ---
-    // Aquí eliges la subpestaña por defecto del panel de rutas
-if (tabName === 'rutas') {
-    // Cargar la primera pestaña que SÍ existe
-    switchRoutesTab('crear-rutas');
-    setTimeout(() => initRutasPanel(), 100);
-}
-}
 
     //=========================================================
     // FUNCIONES ADMINISTRATIVAS
@@ -4720,12 +4883,15 @@ function renderUsuariosAdminTable() {
     `;
     cont.innerHTML = html;
 }
-function renderAsignacionesAdminTable() {
+    function renderAsignacionesAdminTable() {
     // 1. llenar combos de zona y recurso
     const selZona = document.getElementById('assignZoneSelect');
     const selRec  = document.getElementById('assignResourceSelect');
+    const selRecLocation = document.getElementById('resourceLocation'); // Para el formulario de crear recurso
+    
     if (!selZona || !selRec) return;
 
+    // Llenar select de zonas para asignación
     selZona.innerHTML = '<option value="">Selecciona una zona</option>';
     zonasData.forEach(z => {
         const opt = document.createElement('option');
@@ -4734,6 +4900,23 @@ function renderAsignacionesAdminTable() {
         selZona.appendChild(opt);
     });
 
+    // ⭐ LLENAR SELECT DE ZONAS PARA CREAR RECURSO
+    if (selRecLocation) {
+        selRecLocation.innerHTML = '<option value="">📦 Almacén Central (Sin asignar)</option>';
+        zonasData.forEach(z => {
+            const opt = document.createElement('option');
+            opt.value = z.id;
+            const urgencia = z.nivelUrgencia || z.urgencia || 'MEDIA';
+            const icono = urgencia === 'CRITICA' ? '🔴' : urgencia === 'ALTA' ? '🟠' : urgencia === 'MEDIA' ? '🟡' : '🟢';
+            opt.textContent = `${icono} ${z.nombre || z.id}`;
+            selRecLocation.appendChild(opt);
+        });
+        console.log('✅ Select de ubicación actualizado con', zonasData.length, 'zonas');
+    } else {
+        console.warn('⚠️ No se encontró el select #resourceLocation');
+    }
+
+    // Llenar select de recursos
     selRec.innerHTML = '<option value="">Selecciona un recurso</option>';
     recursosData.forEach(r => {
         const opt = document.createElement('option');
@@ -4814,7 +4997,13 @@ async function assignResourceToZone() {
         }
 
         showNotification('Recurso asignado correctamente', 'success');
-        await loadAdminData(); // recarga asignacionesData y vuelve a pintar
+        await loadAdminData();
+        
+        // Actualizar estadísticas y árbol
+        if (currentTab === 'estadisticas') {
+            await loadEstadisticasTab();
+        }
+        await updateTreeFromResources();
     } catch (err) {
         console.error('Error asignando recurso:', err);
         showNotification('Error de conexión al asignar el recurso', 'error');
@@ -5749,29 +5938,41 @@ async function handleAdminZoneSubmit(e) {
 
         showNotification('Zona creada correctamente', 'success');
         e.target.reset();
-        await loadAdminData(); // Recargar datos
+        await loadAdminData();
+        
+        // Actualizar estadísticas y árbol si están activas
+        if (currentTab === 'estadisticas') {
+            await loadEstadisticasTab();
+        }
+        await updateTreeFromResources();
     } catch (err) {
         console.error('Error al crear zona:', err);
         showNotification('Error de conexión al crear la zona', 'error');
     }
 }
 
-async function handleAdminResourceSubmit(e) {
+    async function handleAdminResourceSubmit(e) {
     e.preventDefault();
 
+    const zonaSeleccionada = document.getElementById('resourceLocation').value.trim();
+    
     const payload = {
         id: document.getElementById('resourceId').value.trim(),
         nombre: document.getElementById('resourceName').value.trim(),
         tipo: document.getElementById('resourceType').value,
         cantidad: parseInt(document.getElementById('resourceQuantity').value || '0', 10),
         unidadMedida: document.getElementById('resourceUnit').value.trim(),
-        ubicacionId: document.getElementById('resourceLocation').value.trim() || null
+        ubicacionId: zonaSeleccionada || null,
+        zonaId: zonaSeleccionada || null, // Algunos backends usan este nombre
+        cantidadDisponible: parseInt(document.getElementById('resourceQuantity').value || '0', 10)
     };
 
     if (!payload.id || !payload.nombre) {
         showNotification('ID y Nombre del recurso son obligatorios', 'error');
         return;
     }
+
+    console.log('📦 Creando recurso:', payload);
 
     try {
         const resp = await fetch(`${API_URL}/recursos`, {
@@ -5783,7 +5984,7 @@ async function handleAdminResourceSubmit(e) {
         const result = await resp.json().catch(() => ({}));
 
         if (!resp.ok || result.success === false) {
-            console.error('Error creando recurso:', result);
+            console.error('Error al crear recurso:', result);
             showNotification(result.message || 'No se pudo crear el recurso', 'error');
             return;
         }
@@ -5791,6 +5992,15 @@ async function handleAdminResourceSubmit(e) {
         showNotification('Recurso creado correctamente', 'success');
         e.target.reset();
         await loadAdminData();
+        
+        // Actualizar estadísticas y árbol
+        if (currentTab === 'estadisticas') {
+            await loadEstadisticasTab();
+        }
+        
+        console.log('🌳 Actualizando árbol después de crear recurso...');
+        await updateTreeFromResources();
+        
     } catch (err) {
         console.error('Error al crear recurso:', err);
         showNotification('Error de conexión al crear recurso', 'error');
@@ -5834,6 +6044,11 @@ async function handleAdminTeamSubmit(e) {
         showNotification('Equipo creado correctamente', 'success');
         e.target.reset();
         await loadAdminData();
+        
+        // Actualizar estadísticas
+        if (currentTab === 'estadisticas') {
+            await loadEstadisticasTab();
+        }
     } catch (err) {
         console.error('Error al crear equipo:', err);
         showNotification('Error de conexión al crear equipo', 'error');
@@ -5965,8 +6180,6 @@ async function cargarDatosDesdeArchivoUsuario() {
     
     input.click();
 }
-
-
 </script>
 </body>
 </html>
