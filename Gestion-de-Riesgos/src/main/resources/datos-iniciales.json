@@ -1,0 +1,121 @@
+{
+  "zonas": [
+    {
+      "id": "Z001",
+      "nombre": "Ciudad Central",
+      "nivelUrgencia": "ALTA",
+      "coordenadaX": 4.5389,
+      "coordenadaY": -75.6678,
+      "poblacionAfectada": 15000,
+      "descripcion": "Zona urbana principal afectada por terremoto",
+      "radio": 500
+    },
+    {
+      "id": "Z002",
+      "nombre": "Refugio Norte",
+      "nivelUrgencia": "MEDIA",
+      "coordenadaX": 4.5489,
+      "coordenadaY": -75.6578,
+      "poblacionAfectada": 2000,
+      "descripcion": "Refugio temporal para evacuados",
+      "radio": 500
+    },
+    {
+      "id": "Z003",
+      "nombre": "Hospital Principal",
+      "nivelUrgencia": "CRITICA",
+      "coordenadaX": 4.5289,
+      "coordenadaY": -75.6778,
+      "poblacionAfectada": 500,
+      "descripcion": "Hospital con heridos críticos",
+      "radio": 500
+    }
+  ],
+  "rutas": [
+    {
+      "id": "R001",
+      "origenId": "Z001",
+      "destinoId": "Z002",
+      "distancia": 15.5,
+      "tiempoEstimado": 0.8,
+      "tipo": "TERRESTRE"
+    },
+    {
+      "id": "R002",
+      "origenId": "Z001",
+      "destinoId": "Z003",
+      "distancia": 8.2,
+      "tiempoEstimado": 0.5,
+      "tipo": "TERRESTRE"
+    },
+    {
+      "id": "R003",
+      "origenId": "Z002",
+      "destinoId": "Z003",
+      "distancia": 12.3,
+      "tiempoEstimado": 0.7,
+      "tipo": "TERRESTRE"
+    }
+  ],
+  "recursos": [
+    {
+      "id": "R001",
+      "nombre": "Agua Potable",
+      "tipo": "ALIMENTOS",
+      "cantidad": 1000,
+      "unidadMedida": "litros",
+      "ubicacionId": "Z001"
+    },
+    {
+      "id": "R002",
+      "nombre": "Medicinas Básicas",
+      "tipo": "MEDICINAS",
+      "cantidad": 500,
+      "unidadMedida": "unidades",
+      "ubicacionId": "Z003"
+    },
+    {
+      "id": "R003",
+      "nombre": "Alimentos No Perecederos",
+      "tipo": "ALIMENTOS",
+      "cantidad": 2000,
+      "unidadMedida": "kg",
+      "ubicacionId": "Z002"
+    }
+  ],
+  "equipos": [
+    {
+      "id": "EQ001",
+      "nombre": "Equipo Médico Alpha",
+      "tipo": "MEDICO",
+      "ubicacionActual": "Z003",
+      "capacidadMaxima": 8,
+      "liderEquipo": "Dr. García",
+      "personalAsignado": 6,
+      "experienciaAnos": 8
+    },
+    {
+      "id": "EQ002",
+      "nombre": "Bomberos Bravo",
+      "tipo": "BOMBEROS",
+      "ubicacionActual": "Z001",
+      "capacidadMaxima": 12,
+      "liderEquipo": "Cpt. Rodríguez",
+      "personalAsignado": 10,
+      "experienciaAnos": 12
+    }
+  ],
+  "usuarios": [
+    {
+      "id": "U001",
+      "nombre": "Admin",
+      "apellido": "Sistema",
+      "email": "admin@sistema.com",
+      "username": "admin",
+      "password": "admin123",
+      "rol": "ADMINISTRADOR",
+      "departamento": "Coordinación"
+    }
+  ]
+}
+

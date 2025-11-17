@@ -1,11 +1,18 @@
 // Archivo: src/main/java/co/edu/uniquindio/Gestion/de/Riesgos/Controller/DisasterRestController.java
 package co.edu.uniquindio.Gestion.de.Riesgos;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.ClassPathResource;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -827,6 +834,266 @@ public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
     public ResponseEntity<Map<String, Object>> obtenerReporteGeneral() {
         String reporte = sistema.generarReporteGeneral();
         return ResponseEntity.ok(Map.of("reporte", reporte));
+    }
+
+    // ============ CARGA DE DATOS DESDE ARCHIVO JSON ============
+
+    @PostMapping("/cargar-datos")
+    public ResponseEntity<Map<String, Object>> cargarDatosDesdeJSON(@RequestBody(required = false) Map<String, Object> datosJson) {
+        try {
+            Map<String, Object> datos;
+            
+            // Si no se envía JSON en el body, cargar desde archivo
+            if (datosJson == null || datosJson.isEmpty()) {
+                datos = cargarDatosDesdeArchivo();
+                // Verificar si el archivo se cargó correctamente
+                if (datos == null || datos.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                            "success", false,
+                            "message", "No se pudo cargar el archivo JSON o el archivo está vacío"
+                        ));
+                }
+            } else {
+                datos = datosJson;
+            }
+            
+            int zonasCreadas = 0;
+            int rutasCreadas = 0;
+            int recursosCreados = 0;
+            int equiposCreados = 0;
+            int usuariosCreados = 0;
+            
+            // Cargar zonas
+            if (datos.containsKey("zonas") && datos.get("zonas") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> zonas = (List<Map<String, Object>>) datos.get("zonas");
+                for (Map<String, Object> z : zonas) {
+                    try {
+                        Zona zona = new Zona(
+                            (String) z.get("id"),
+                            (String) z.get("nombre"),
+                            NivelUrgencia.valueOf(((String) z.get("nivelUrgencia")).toUpperCase())
+                        );
+                        if (z.containsKey("coordenadaX")) {
+                            zona.setCoordenadaX(((Number) z.get("coordenadaX")).doubleValue());
+                        }
+                        if (z.containsKey("coordenadaY")) {
+                            zona.setCoordenadaY(((Number) z.get("coordenadaY")).doubleValue());
+                        }
+                        if (z.containsKey("poblacionAfectada")) {
+                            zona.setPoblacionAfectada(((Number) z.get("poblacionAfectada")).intValue());
+                        }
+                        if (z.containsKey("descripcion")) {
+                            zona.setDescripcion((String) z.get("descripcion"));
+                        }
+                        if (z.containsKey("radio")) {
+                            zona.setRadio(((Number) z.get("radio")).intValue());
+                        }
+                        if (sistema.agregarZona(zona)) {
+                            zonasCreadas++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error creando zona: " + e.getMessage());
+                    }
+                }
+            }
+            
+            // Cargar rutas
+            if (datos.containsKey("rutas") && datos.get("rutas") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> rutas = (List<Map<String, Object>>) datos.get("rutas");
+                for (Map<String, Object> r : rutas) {
+                    try {
+                        Ruta ruta = sistema.conectarZonas(
+                            (String) r.get("id"),
+                            (String) r.get("origenId"),
+                            (String) r.get("destinoId"),
+                            ((Number) r.get("distancia")).doubleValue(),
+                            ((Number) r.get("tiempoEstimado")).doubleValue(),
+                            TipoRuta.valueOf(((String) r.get("tipo")).toUpperCase())
+                        );
+                        if (ruta != null) {
+                            rutasCreadas++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error creando ruta: " + e.getMessage());
+                    }
+                }
+            }
+            
+            // Cargar recursos
+            if (datos.containsKey("recursos") && datos.get("recursos") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> recursos = (List<Map<String, Object>>) datos.get("recursos");
+                for (Map<String, Object> r : recursos) {
+                    try {
+                        Recurso recurso = new Recurso(
+                            (String) r.get("id"),
+                            (String) r.get("nombre"),
+                            TipoRecurso.valueOf(((String) r.get("tipo")).toUpperCase()),
+                            ((Number) r.get("cantidad")).intValue(),
+                            (String) r.get("unidadMedida"),
+                            (String) r.get("ubicacionId")
+                        );
+                        if (sistema.agregarRecurso(recurso)) {
+                            recursosCreados++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error creando recurso: " + e.getMessage());
+                    }
+                }
+            }
+            
+            // Cargar equipos
+            if (datos.containsKey("equipos") && datos.get("equipos") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> equipos = (List<Map<String, Object>>) datos.get("equipos");
+                for (Map<String, Object> e : equipos) {
+                    try {
+                        EquipoRescate equipo = new EquipoRescate(
+                            (String) e.get("id"),
+                            (String) e.get("nombre"),
+                            EquipoRescate.TipoEquipo.valueOf(((String) e.get("tipo")).toUpperCase()),
+                            (String) e.get("ubicacionActual"),
+                            ((Number) e.get("capacidadMaxima")).intValue(),
+                            (String) e.get("liderEquipo")
+                        );
+                        if (e.containsKey("personalAsignado")) {
+                            equipo.setPersonalAsignado(((Number) e.get("personalAsignado")).intValue());
+                        }
+                        if (e.containsKey("experienciaAnos")) {
+                            equipo.setExperienciaAnos(((Number) e.get("experienciaAnos")).intValue());
+                        }
+                        if (sistema.agregarEquipo(equipo)) {
+                            equiposCreados++;
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Error creando equipo: " + ex.getMessage());
+                    }
+                }
+            }
+            
+            // Cargar usuarios
+            if (datos.containsKey("usuarios") && datos.get("usuarios") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> usuarios = (List<Map<String, Object>>) datos.get("usuarios");
+                for (Map<String, Object> u : usuarios) {
+                    try {
+                        String rol = ((String) u.get("rol")).toUpperCase();
+                        Usuario usuario;
+                        if ("ADMINISTRADOR".equals(rol)) {
+                            usuario = new Administrador(
+                                (String) u.get("id"),
+                                (String) u.get("nombre"),
+                                (String) u.get("apellido"),
+                                (String) u.get("email"),
+                                (String) u.get("username"),
+                                (String) u.get("password"),
+                                (String) u.getOrDefault("departamento", "General")
+                            );
+                        } else {
+                            usuario = new OperadorEmergencia(
+                                (String) u.get("id"),
+                                (String) u.get("nombre"),
+                                (String) u.get("apellido"),
+                                (String) u.get("email"),
+                                (String) u.get("username"),
+                                (String) u.get("password"),
+                                (String) u.getOrDefault("especialidad", "Emergencias"),
+                                (String) u.getOrDefault("ubicacion", "Sin asignar")
+                            );
+                        }
+                        if (sistema.agregarUsuario(usuario)) {
+                            usuariosCreados++;
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Error creando usuario: " + ex.getMessage());
+                    }
+                }
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Datos cargados exitosamente",
+                "resumen", Map.of(
+                    "zonas", zonasCreadas,
+                    "rutas", rutasCreadas,
+                    "recursos", recursosCreados,
+                    "equipos", equiposCreados,
+                    "usuarios", usuariosCreados
+                )
+            ));
+            
+        } catch (Exception e) {
+            System.err.println("Error cargando datos desde JSON: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Error al cargar datos: " + e.getMessage()
+                ));
+        }
+    }
+    
+    /**
+     * Carga datos desde el archivo JSON predefinido en resources
+     */
+    private Map<String, Object> cargarDatosDesdeArchivo() {
+        try {
+            ClassPathResource resource = new ClassPathResource("datos-iniciales.json");
+            
+            if (!resource.exists()) {
+                System.err.println("❌ El archivo datos-iniciales.json no existe en resources");
+                return new HashMap<>();
+            }
+            
+            InputStream inputStream = resource.getInputStream();
+            StringBuilder jsonContent = new StringBuilder();
+            
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonContent.append(line).append("\n");
+                }
+            }
+            
+            if (jsonContent.length() == 0) {
+                System.err.println("❌ El archivo datos-iniciales.json está vacío");
+                return new HashMap<>();
+            }
+            
+            ObjectMapper objectMapper = new ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> datos = objectMapper.readValue(jsonContent.toString(), Map.class);
+            
+            System.out.println("✅ Archivo JSON cargado correctamente desde resources");
+            return datos;
+        } catch (Exception e) {
+            System.err.println("❌ Error leyendo archivo JSON: " + e.getMessage());
+            e.printStackTrace();
+            return new HashMap<>();
+        }
+    }
+    
+    /**
+     * Endpoint para cargar datos desde el archivo predefinido
+     */
+    @PostMapping("/cargar-datos-archivo")
+    public ResponseEntity<Map<String, Object>> cargarDatosDesdeArchivoPredefinido() {
+        try {
+            System.out.println("📥 Iniciando carga de datos desde archivo JSON...");
+            return cargarDatosDesdeJSON(null);
+        } catch (Exception e) {
+            System.err.println("❌ Error en endpoint cargar-datos-archivo: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Error al procesar la solicitud: " + e.getMessage()
+                ));
+        }
     }
 
     // ============ INICIALIZACIÓN DE DATOS DE PRUEBA ============

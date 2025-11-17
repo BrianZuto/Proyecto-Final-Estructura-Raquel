@@ -1429,6 +1429,10 @@
                                 <i class="fas fa-chart-line"></i>
                                 <span>Ver Estadísticas</span>
                             </button>
+                            <button class="action-btn" onclick="cargarDatosDesdeJSON()">
+                                <i class="fas fa-file-upload"></i>
+                                <span>Cargar Datos JSON</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2349,6 +2353,7 @@ let recursosData     = [];
 let equiposData      = [];
 let usuariosData     = [];
 let asignacionesData = [];
+let currentTab       = 'inicio'; // Pestaña actual activa
 
 // Estado de edición
 let editingZonaId = null;   // null = creando, distinto de null = editando
@@ -4176,6 +4181,9 @@ function showMap() {
     // FUNCIONES SWITCH DE PESTAÑAS
     //=========================================================
     function switchTab(tabName) {
+    // Actualizar la pestaña actual
+    currentTab = tabName;
+    
     // 1. Activar botón principal correcto
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -5830,6 +5838,132 @@ async function handleAdminTeamSubmit(e) {
         console.error('Error al crear equipo:', err);
         showNotification('Error de conexión al crear equipo', 'error');
     }
+}
+
+// ============ CARGA DE DATOS DESDE JSON ============
+
+/**
+ * Carga datos desde el archivo JSON predefinido
+ */
+async function cargarDatosDesdeJSON() {
+    if (!confirm('¿Desea cargar los datos desde el archivo JSON? Esto agregará nuevos datos al sistema.')) {
+        return;
+    }
+
+    try {
+        showNotification('Cargando datos desde JSON...', 'info');
+        
+        const resp = await fetch(`${API_URL}/cargar-datos-archivo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        let result;
+        try {
+            result = await resp.json();
+        } catch (jsonErr) {
+            console.error('Error parseando respuesta JSON:', jsonErr);
+            const text = await resp.text();
+            console.error('Respuesta del servidor:', text);
+            showNotification('Error: El servidor respondió con un formato inválido. Verifique la consola.', 'error');
+            return;
+        }
+
+        if (!resp.ok || result.success === false) {
+            console.error('Error cargando datos:', result);
+            const mensajeError = result.message || `Error ${resp.status}: ${resp.statusText}`;
+            showNotification(mensajeError, 'error');
+            return;
+        }
+
+        const resumen = result.resumen || {};
+        const mensaje = `Datos cargados exitosamente:\n` +
+            `• Zonas: ${resumen.zonas || 0}\n` +
+            `• Rutas: ${resumen.rutas || 0}\n` +
+            `• Recursos: ${resumen.recursos || 0}\n` +
+            `• Equipos: ${resumen.equipos || 0}\n` +
+            `• Usuarios: ${resumen.usuarios || 0}`;
+        
+        showNotification(mensaje, 'success');
+        
+        // Recargar datos en las pestañas activas
+        if (currentTab === 'mapa') {
+            await reloadZonesOnMap();
+        } else if (currentTab === 'admin') {
+            await loadAdminData();
+        } else if (currentTab === 'estadisticas') {
+            await loadStatistics();
+        } else if (currentTab === 'recursos') {
+            await loadResources();
+        }
+        
+    } catch (err) {
+        console.error('Error al cargar datos desde JSON:', err);
+        const mensajeError = err.message || 'Error de conexión al cargar datos. Verifique que el servidor esté corriendo.';
+        showNotification(mensajeError, 'error');
+    }
+}
+
+/**
+ * Carga datos desde un archivo JSON seleccionado por el usuario
+ */
+async function cargarDatosDesdeArchivoUsuario() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const fileContent = await file.text();
+            const datosJson = JSON.parse(fileContent);
+            
+            showNotification('Cargando datos desde archivo...', 'info');
+            
+            const resp = await fetch(`${API_URL}/cargar-datos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosJson)
+            });
+
+            const result = await resp.json().catch(() => ({}));
+
+            if (!resp.ok || result.success === false) {
+                console.error('Error cargando datos:', result);
+                showNotification(result.message || 'No se pudieron cargar los datos', 'error');
+                return;
+            }
+
+            const resumen = result.resumen || {};
+            const mensaje = `Datos cargados exitosamente:\n` +
+                `• Zonas: ${resumen.zonas || 0}\n` +
+                `• Rutas: ${resumen.rutas || 0}\n` +
+                `• Recursos: ${resumen.recursos || 0}\n` +
+                `• Equipos: ${resumen.equipos || 0}\n` +
+                `• Usuarios: ${resumen.usuarios || 0}`;
+            
+            showNotification(mensaje, 'success');
+            
+            // Recargar datos en las pestañas activas
+            if (currentTab === 'mapa') {
+                await reloadZonesOnMap();
+            } else if (currentTab === 'admin') {
+                await loadAdminData();
+            } else if (currentTab === 'estadisticas') {
+                await loadStatistics();
+            } else if (currentTab === 'recursos') {
+                await loadResources();
+            }
+            
+        } catch (err) {
+            console.error('Error al procesar archivo JSON:', err);
+            showNotification('Error al leer el archivo JSON. Verifique el formato.', 'error');
+        }
+    };
+    
+    input.click();
 }
 
 
