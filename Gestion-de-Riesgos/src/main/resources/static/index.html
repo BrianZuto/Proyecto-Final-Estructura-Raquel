@@ -2093,23 +2093,41 @@
                             <h2><i class="fas fa-cogs"></i> Controles del Árbol</h2>
                         </div>
 
-                        <div class="tree-stats-box" style="margin-bottom: 20px;">
-                            <h4><i class="fas fa-chart-bar"></i> Estadísticas del Árbol</h4>
+                       <div class="tree-stats-box" style="margin-bottom: 20px;">
+                            <h4><i class="fas fa-chart-bar"></i> Estadísticas del Sistema</h4>
                             <div class="tree-stat-item">
-                                <span>Total de Nodos:</span>
+                                <span>📊 Nodos en el árbol:</span>
                                 <span class="tree-stat-value" id="treeTotalNodes">0</span>
                             </div>
                             <div class="tree-stat-item">
-                                <span>Cantidad Total:</span>
+                                <span>📦 Recursos totales:</span>
                                 <span class="tree-stat-value" id="treeTotalQuantity">0</span>
                             </div>
                             <div class="tree-stat-item">
-                                <span>Profundidad Máxima:</span>
+                                <span>🌳 Niveles de distribución:</span>
                                 <span class="tree-stat-value" id="treeMaxDepth">0</span>
                             </div>
+                        </div> 
+
+                        <div style="background: #ebf8ff; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #4299e1;">
+                            <p style="margin: 0; color: #2c5282; font-size: 0.85rem;">
+                                <i class="fas fa-info-circle"></i> <strong>Sistema Inteligente:</strong> 
+                                Los recursos se distribuyen automáticamente priorizando zonas críticas y de alta urgencia.
+                            </p>
                         </div>
 
-                        <form id="treeNodeForm" class="two-column">
+                        <div style="background: #f7fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 2px dashed #cbd5e0;">
+                            <p style="margin: 0; color: #4a5568; text-align: center;">
+                                <i class="fas fa-magic" style="color: #667eea; font-size: 1.5rem; display: block; margin-bottom: 8px;"></i>
+                                <strong>Árbol Automático</strong><br>
+                                <span style="font-size: 0.85rem;">
+                                El árbol se genera automáticamente desde el Panel de Administración.<br>
+                                Asigna recursos a zonas y el sistema optimizará la distribución.
+                                </span>
+                            </p>
+                        </div>
+
+                        <form id="treeNodeForm" class="two-column" style="display: none">
                             <div class="input-group">
                                 <label><i class="fas fa-tag"></i> ID del Nodo *</label>
                                 <input type="text" id="treeNodeId" required placeholder="ej. nodo_1">
@@ -2150,10 +2168,21 @@
                         </form>
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px;">
-                            <button class=""btn-action" onclick="manualUpdateTree()" style="background: #48bb78;">
-                            <i class="fas fa-sync-alt"></i> Actualizar Árbol
+                            <button class="btn-action" onclick="manualUpdateTree()" style="background: #48bb78; color: white;">
+                                <i class="fas fa-sync-alt"></i> Actualizar Distribución
                             </button>
-
+                            <button class="btn-action" onclick="treeExpandAll()">
+                                <i class="fas fa-expand-alt"></i> Expandir Todo
+                            </button>
+                            <button class="btn-action" onclick="treeCollapseAll()">
+                                <i class="fas fa-compress-alt"></i> Contraer Todo
+                            </button>
+                            <button class="btn-action" onclick="treeCenterView()">
+                                <i class="fas fa-compress-arrows-alt"></i> Centrar Vista
+                            </button>
+                            <button class="btn-action" onclick="exportarReporte()" style="background: #667eea; color: white;">
+                                <i class="fas fa-download"></i> Exportar Reporte
+                            </button>
                         </div>
                     </div>
 
@@ -3705,11 +3734,20 @@ function showMap() {
     // ==========================================================
 
     function initTree() {
+        console.log('🌳 Inicializando árbol D3...');
+        
+        const svgElement = document.getElementById("tree-svg");
+        if (!svgElement) {
+            console.error('❌ No se encontró el elemento #tree-svg');
+            return;
+        }
+
         treeSvg = d3.select("#tree-svg");
         
         // Limpiar cualquier contenido previo
         treeSvg.selectAll("*").remove();
         
+        // Configurar zoom
         treeZoom = d3.zoom()
             .scaleExtent([0.1, 3])
             .on("zoom", (event) => {
@@ -3718,74 +3756,136 @@ function showMap() {
 
         treeSvg.call(treeZoom);
 
+        // Crear grupo principal
         treeG = treeSvg.append("g")
             .attr("transform", `translate(${treeWidth / 2}, 50)`);
 
+        // Configurar layout del árbol
         d3Tree = d3.tree()
             .size([treeWidth - 200, treeHeight - 100])
             .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
 
+        console.log('✅ Árbol D3 inicializado');
+        
+        // Cargar recursos para el select
         loadTreeResources();
     }
 
+    function treeDiagonal(s, d) {
+        return `M ${s.x} ${s.y}
+                C ${s.x} ${(s.y + d.y) / 2},
+                ${d.x} ${(s.y + d.y) / 2},
+                ${d.x} ${d.y}`;
+    }
+
+    function getTreeColorByPriority(priority) {
+        if (priority >= 9) return "#e53e3e"; // Rojo (crítica)
+        if (priority >= 7) return "#ed8936"; // Naranja (alta)
+        if (priority >= 5) return "#ecc94b"; // Amarillo (media)
+        if (priority >= 3) return "#48bb78"; // Verde (baja)
+        return "#a0aec0"; // Gris (sin prioridad)
+    }
+
     function updateTreeVisualization() {
-        if (!d3Tree) return;
+        if (!d3Tree || !treeData) {
+            console.error('❌ d3Tree o treeData no están inicializados');
+            return;
+        }
 
-        treeRoot = d3.hierarchy(treeData);
-        d3Tree(treeRoot);
+        console.log('🎨 Actualizando visualización del árbol...');
+        console.log('📊 Datos del árbol:', treeData);
 
-        updateTreeStats();
-        updateTreeParentSelect();
-        drawTree();
+        try {
+            // Crear jerarquía desde los datos
+            treeRoot = d3.hierarchy(treeData);
+            
+            // Aplicar el layout del árbol
+            d3Tree(treeRoot);
+
+            console.log('✅ Jerarquía creada:', treeRoot);
+            console.log('✅ Nodos descendientes:', treeRoot.descendants().length);
+
+            // Actualizar estadísticas
+            updateTreeStats();
+            updateTreeParentSelect();
+            
+            // Dibujar el árbol
+            drawTree();
+            
+            console.log('✅ Visualización completada');
+        } catch (error) {
+            console.error('❌ Error en updateTreeVisualization:', error);
+        }
     }
 
     function drawTree() {
+        if (!treeRoot) {
+            console.error('❌ treeRoot no está definido');
+            return;
+        }
+
         const duration = 750;
 
-        // Links (conexiones)
-        const link = treeG.selectAll(".d3-link")
-            .data(treeRoot.links(), d => `${d.source.data.id}-${d.target.data.id}`);
+        console.log('🎨 Dibujando árbol con', treeRoot.descendants().length, 'nodos');
 
+        // ==================== LINKS (Conexiones) ====================
+        const links = treeRoot.links();
+        console.log('🔗 Enlaces a dibujar:', links.length);
+
+        const link = treeG.selectAll(".d3-link")
+            .data(links, d => `${d.source.data.id}-${d.target.data.id}`);
+
+        // Eliminar enlaces antiguos
         link.exit()
             .transition()
             .duration(duration)
             .style("opacity", 0)
             .remove();
 
+        // Agregar nuevos enlaces
         const linkEnter = link.enter()
             .append("path")
             .attr("class", "d3-link")
-            .attr("d", d => {
-                const o = {x: d.source.x, y: d.source.y};
-                return treeDiagonal(o, o);
-            })
+            .attr("d", d => treeDiagonal(d.source, d.target))
             .style("opacity", 0)
-            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority));
+            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority))
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
 
-            linkEnter.merge(link)
+        // Actualizar enlaces existentes
+        linkEnter.merge(link)
             .transition()
             .duration(duration)
             .attr("d", d => treeDiagonal(d.source, d.target))
             .attr("stroke", d => getTreeColorByPriority(d.target.data.priority))
-            .style("opacity", d => d.target.data._collapsed ? 0.3 : 1);
+            .style("opacity", 1);
 
-        // Nodes (nodos)
+        // ==================== NODES (Nodos) ====================
+        const nodes = treeRoot.descendants();
+        console.log('🔵 Nodos a dibujar:', nodes.length);
+
         const node = treeG.selectAll(".d3-node")
-            .data(treeRoot.descendants(), d => d.data.id);
+            .data(nodes, d => d.data.id);
 
+        // Eliminar nodos antiguos
         node.exit()
             .transition()
             .duration(duration)
             .style("opacity", 0)
             .remove();
 
+        // Agregar nuevos nodos
         const nodeEnter = node.enter()
             .append("g")
             .attr("class", "d3-node")
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .style("opacity", 0)
-            .on("click", (event, d) => toggleTreeNode(event, d));
-            // Círculo del nodo
+            .on("click", (event, d) => {
+                event.stopPropagation();
+                toggleTreeNode(event, d);
+            });
+
+        // Círculo del nodo
         nodeEnter.append("circle")
             .attr("r", treeNodeRadius)
             .attr("stroke", d => getTreeColorByPriority(d.data.priority))
@@ -3794,32 +3894,36 @@ function showMap() {
 
         // Texto: Nombre
         nodeEnter.append("text")
-            .attr("dy", -treeNodeRadius - 5)
+            .attr("dy", -treeNodeRadius - 8)
             .attr("text-anchor", "middle")
             .attr("fill", "#2d3748")
             .style("font-weight", "700")
+            .style("font-size", "13px")
             .text(d => d.data.name);
 
-        // Texto: Cantidad
+        // Texto: Información adicional
         nodeEnter.append("text")
             .attr("dy", 5)
             .attr("text-anchor", "middle")
             .attr("fill", "#4a5568")
-            .style("font-size", "11px")
-            .text(d => `${d.data.quantity} unidades`);
-
-        // Texto: Prioridad
-        nodeEnter.append("text")
-            .attr("dy", treeNodeRadius + 15)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#718096")
             .style("font-size", "10px")
-            .text(d => `P: ${d.data.priority}`);
+            .text(d => d.data.info || `${d.data.quantity} unidades`);
 
-        // Indicador de expansión/colapso
+        // Texto: Cantidad
+        nodeEnter.append("text")
+            .attr("dy", treeNodeRadius + 18)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#667eea")
+            .style("font-size", "12px")
+            .style("font-weight", "700")
+            .text(d => d.data.quantity > 0 ? `📦 ${d.data.quantity}` : '');
+
+        // Indicador de expansión/colapso (solo si tiene hijos)
         nodeEnter.each(function(d) {
             if (d.data.children && d.data.children.length > 0) {
-                d3.select(this).append("circle")
+                const g = d3.select(this);
+                
+                g.append("circle")
                     .attr("r", 8)
                     .attr("cx", treeNodeRadius - 5)
                     .attr("cy", -treeNodeRadius + 5)
@@ -3827,7 +3931,7 @@ function showMap() {
                     .attr("stroke", "#fff")
                     .attr("stroke-width", 2);
 
-                d3.select(this).append("text")
+                g.append("text")
                     .attr("x", treeNodeRadius - 5)
                     .attr("y", -treeNodeRadius + 5)
                     .attr("dy", 4)
@@ -3839,14 +3943,18 @@ function showMap() {
             }
         });
 
+        // Transición de entrada
         nodeEnter.transition()
             .duration(duration)
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .style("opacity", 1);
 
+        // Actualizar nodos existentes
         node.transition()
             .duration(duration)
             .attr("transform", d => `translate(${d.x},${d.y})`);
+
+        console.log('✅ Árbol dibujado exitosamente');
     }
 
     function treeDiagonal(s, d) {
@@ -3879,16 +3987,25 @@ function showMap() {
     }
 
     function updateTreeStats() {
-        const totalNodes = countTreeNodes(treeData) - 1;
-        const totalQuantity = sumTreeQuantities(treeData);
-        const maxDepth = getTreeMaxDepth(treeRoot);
+    const totalNodes = countTreeNodes(treeData) - 1;
+    const totalQuantity = treeData.quantity || 0;
+    const maxDepth = getTreeMaxDepth(treeRoot);
 
-        document.getElementById("treeTotalNodes").textContent = totalNodes;
-        document.getElementById("treeTotalQuantity").textContent = totalQuantity;
-        document.getElementById("treeMaxDepth").textContent = maxDepth;
+    document.getElementById("treeTotalNodes").textContent = totalNodes;
+    document.getElementById("treeTotalQuantity").textContent = totalQuantity;
+    document.getElementById("treeMaxDepth").textContent = maxDepth;
 
-        treeData.quantity = totalQuantity;
-    }
+    // Calcular estadísticas adicionales
+    const bases = treeData.children.filter(c => c.id && c.id.startsWith('base-'));
+    const zonas = treeData.children.flatMap(c => c.children || []).filter(z => z.id && z.id.startsWith('zona-'));
+    
+    console.log(`📊 Estadísticas del árbol:`);
+    console.log(`   Nodos totales: ${totalNodes}`);
+    console.log(`   Recursos totales: ${totalQuantity}`);
+    console.log(`   Profundidad: ${maxDepth}`);
+    console.log(`   Bases: ${bases.length}`);
+    console.log(`   Zonas: ${zonas.length}`);
+}
 
     function countTreeNodes(node) {
         let count = 1;
@@ -4338,20 +4455,30 @@ async function manualUpdateTree() {
     }
 
     // Actualizar árbol cuando se carga la pestaña
-async function loadArbolTab() {
-    // Inicializar el SVG del árbol si no existe
-    if (!d3Tree) {
-        initTree();
+    async function loadArbolTab() {
+        console.log('🌳 ========================================');
+        console.log('🌳 CARGANDO PESTAÑA DEL ÁRBOL');
+        console.log('🌳 ========================================');
+        
+        // Inicializar el SVG del árbol si no existe
+        if (!d3Tree) {
+            console.log('🌳 Inicializando árbol por primera vez...');
+            initTree();
+        }
+        
+        // Esperar un momento para que el SVG esté listo
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Cargar recursos y generar el árbol
+        console.log('🌳 Actualizando desde recursos...');
+        await updateTreeFromResources();
+        
+        // Forzar actualización de la visualización
+        console.log('🌳 Forzando actualización de visualización...');
+        setTimeout(() => {
+            updateTreeVisualization();
+        }, 100);
     }
-    
-    // Cargar recursos y generar el árbol
-    await updateTreeFromResources();
-    
-    // Forzar actualización de la visualización
-    setTimeout(() => {
-        updateTreeVisualization();
-    }, 100);
-}
     //=========================================================
     // FUNCIONES SWITCH DE PESTAÑAS
     //=========================================================
@@ -6179,6 +6306,55 @@ async function cargarDatosDesdeArchivoUsuario() {
     };
     
     input.click();
+}
+
+function exportarReporte() {
+    if (!treeData || !treeData.children || treeData.children.length === 0) {
+        showNotification('No hay datos para exportar', 'error');
+        return;
+    }
+
+    let reporte = '=================================================\n';
+    reporte += 'REPORTE DE DISTRIBUCIÓN DE RECURSOS\n';
+    reporte += `Fecha: ${new Date().toLocaleString()}\n`;
+    reporte += '=================================================\n\n';
+    
+    reporte += `🏢 ${treeData.name}\n`;
+    reporte += `   Total de recursos: ${treeData.quantity}\n`;
+    reporte += `   ${treeData.info || ''}\n\n`;
+
+    treeData.children.forEach(base => {
+        reporte += `\n📍 ${base.name}\n`;
+        reporte += `   Recursos: ${base.quantity}\n`;
+        reporte += `   ${base.info || ''}\n`;
+        
+        if (base.children && base.children.length > 0) {
+            base.children.forEach(zona => {
+                reporte += `\n   └─ ${zona.name}\n`;
+                reporte += `      Recursos: ${zona.quantity}\n`;
+                reporte += `      ${zona.info || ''}\n`;
+                
+                if (zona.children && zona.children.length > 0) {
+                    zona.children.forEach(recurso => {
+                        reporte += `         • ${recurso.name}\n`;
+                    });
+                }
+            });
+        }
+    });
+
+    // Crear y descargar archivo
+    const blob = new Blob([reporte], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte-distribucion-${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showNotification('✅ Reporte exportado correctamente', 'success');
 }
 </script>
 </body>
