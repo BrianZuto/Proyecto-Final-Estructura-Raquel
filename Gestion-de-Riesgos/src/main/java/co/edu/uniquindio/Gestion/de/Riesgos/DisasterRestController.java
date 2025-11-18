@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -24,6 +22,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.uniquindio.Gestion.de.Riesgos.Enums.NivelUrgencia;
 import co.edu.uniquindio.Gestion.de.Riesgos.Enums.TipoRecurso;
@@ -562,23 +562,112 @@ public class DisasterRestController {
     @PostMapping("/rutas")
     public ResponseEntity<Map<String, Object>> crearRuta(@RequestBody Map<String, Object> rutaData) {
         try {
-            Ruta ruta = sistema.conectarZonas(
-                    (String) rutaData.get("id"),
-                    (String) rutaData.get("origenId"),
-                    (String) rutaData.get("destinoId"),
-                    ((Number) rutaData.get("distancia")).doubleValue(),
-                    ((Number) rutaData.get("tiempoEstimado")).doubleValue(),
-                    TipoRuta.valueOf((String) rutaData.get("tipo"))
+            System.out.println("\n========================================");
+            System.out.println("=== CREANDO RUTA - INICIO ===");
+            System.out.println("========================================");
+            System.out.println("📥 Datos recibidos:");
+            rutaData.forEach((key, value) -> 
+                System.out.println("   " + key + " = " + value + " [" + (value != null ? value.getClass().getSimpleName() : "null") + "]")
             );
+            
+            // Validar campos requeridos
+            String id = (String) rutaData.get("id");
+            String origenId = (String) rutaData.get("origenId");
+            String destinoId = (String) rutaData.get("destinoId");
+            Object distanciaObj = rutaData.get("distancia");
+            Object tiempoEstimadoObj = rutaData.get("tiempoEstimado");
+            String tipoStr = (String) rutaData.get("tipo");
+            
+            if (id == null || id.trim().isEmpty()) {
+                System.out.println("❌ ERROR: ID faltante o vacío");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'id' es requerido"));
+            }
+            
+            if (origenId == null || origenId.trim().isEmpty()) {
+                System.out.println("❌ ERROR: Origen faltante o vacío");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'origenId' es requerido"));
+            }
+            
+            if (destinoId == null || destinoId.trim().isEmpty()) {
+                System.out.println("❌ ERROR: Destino faltante o vacío");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'destinoId' es requerido"));
+            }
+            
+            if (distanciaObj == null) {
+                System.out.println("❌ ERROR: Distancia faltante");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'distancia' es requerido"));
+            }
+            
+            if (tiempoEstimadoObj == null) {
+                System.out.println("❌ ERROR: Tiempo estimado faltante");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'tiempoEstimado' es requerido"));
+            }
+            
+            if (tipoStr == null || tipoStr.trim().isEmpty()) {
+                System.out.println("❌ ERROR: Tipo faltante o vacío");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "El campo 'tipo' es requerido"));
+            }
+            
+            // Convertir valores numéricos
+            double distancia;
+            double tiempoEstimado;
+            try {
+                if (distanciaObj instanceof Number) {
+                    distancia = ((Number) distanciaObj).doubleValue();
+                } else {
+                    distancia = Double.parseDouble(distanciaObj.toString());
+                }
+                
+                if (tiempoEstimadoObj instanceof Number) {
+                    tiempoEstimado = ((Number) tiempoEstimadoObj).doubleValue();
+                } else {
+                    tiempoEstimado = Double.parseDouble(tiempoEstimadoObj.toString());
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ ERROR: Error al convertir valores numéricos: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Los campos 'distancia' y 'tiempoEstimado' deben ser números válidos"));
+            }
+            
+            // Validar tipo de ruta
+            TipoRuta tipo;
+            try {
+                tipo = TipoRuta.valueOf(tipoStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("❌ ERROR: Tipo de ruta inválido: " + tipoStr);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Tipo de ruta inválido. Debe ser: TERRESTRE, AEREA o MARITIMA"));
+            }
+            
+            System.out.println("✅ Validación exitosa. Creando ruta...");
+            System.out.println("   ID: " + id);
+            System.out.println("   Origen: " + origenId);
+            System.out.println("   Destino: " + destinoId);
+            System.out.println("   Distancia: " + distancia);
+            System.out.println("   Tiempo: " + tiempoEstimado);
+            System.out.println("   Tipo: " + tipo);
+            
+            Ruta ruta = sistema.conectarZonas(id, origenId, destinoId, distancia, tiempoEstimado, tipo);
 
             if (ruta != null) {
+                System.out.println("✅ Ruta creada exitosamente: " + id);
                 return ResponseEntity.ok(Map.of("success", true, "message", "Ruta creada exitosamente"));
             }
+            
+            System.out.println("❌ No se pudo crear la ruta (zonas no encontradas o ruta duplicada)");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", "No se pudo crear la ruta"));
+                    .body(Map.of("success", false, "message", "No se pudo crear la ruta. Verifica que las zonas existan y que el ID de ruta no esté duplicado."));
         } catch (Exception e) {
+            System.out.println("❌ ERROR EXCEPCIÓN: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", "Error al crear la ruta: " + e.getMessage()));
         }
     }
 

@@ -6113,6 +6113,14 @@ async function loadZonasForRutas() {
 
     console.log('🔄 Cargando zonas para rutas...');
 
+    // Guardar los valores seleccionados antes de recargar
+    const origenSeleccionado = selectOrigen?.value || '';
+    const destinoSeleccionado = selectDestino?.value || '';
+    const evacOrigenSeleccionado = evacOrigen?.value || '';
+    const evacDestinoSeleccionado = evacDestino?.value || '';
+    const optimalOrigenSeleccionado = optimalOrigin?.value || '';
+    const optimalDestinoSeleccionado = optimalDestination?.value || '';
+
     try {
         const resp = await fetch(`${API_URL}/zonas`, { method: 'GET' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -6151,6 +6159,14 @@ async function loadZonasForRutas() {
                 opt2.textContent = `${z.nombre || z.id} (${z.coordenadaX?.toFixed(4)}, ${z.coordenadaY?.toFixed(4)})`;
                 selectDestino.appendChild(opt2);
             });
+            
+            // Restaurar los valores seleccionados si existían
+            if (origenSeleccionado) {
+                selectOrigen.value = origenSeleccionado;
+            }
+            if (destinoSeleccionado) {
+                selectDestino.value = destinoSeleccionado;
+            }
         }
         
         // Llenar selects de evacuación
@@ -6169,6 +6185,14 @@ async function loadZonasForRutas() {
                 opt4.textContent = z.nombre || z.id;
                 evacDestino.appendChild(opt4);
             });
+            
+            // Restaurar los valores seleccionados si existían
+            if (evacOrigenSeleccionado) {
+                evacOrigen.value = evacOrigenSeleccionado;
+            }
+            if (evacDestinoSeleccionado) {
+                evacDestino.value = evacDestinoSeleccionado;
+            }
         }
         
         // Llenar selects de rutas óptimas
@@ -6187,6 +6211,14 @@ async function loadZonasForRutas() {
                 opt6.textContent = z.nombre || z.id;
                 optimalDestination.appendChild(opt6);
             });
+            
+            // Restaurar los valores seleccionados si existían
+            if (optimalOrigenSeleccionado) {
+                optimalOrigin.value = optimalOrigenSeleccionado;
+            }
+            if (optimalDestinoSeleccionado) {
+                optimalDestination.value = optimalDestinoSeleccionado;
+            }
         }
         
         console.log('✅ Todos los selects poblados correctamente');
@@ -6233,7 +6265,7 @@ function calcularTiempoEstimado(distanciaKm, tipoRuta) {
 /**
  * Calcula y muestra la vista previa de la ruta
  */
-function calculateRoutePreview() {
+async function calculateRoutePreview() {
     const origenId = document.getElementById('routeOrigin')?.value;
     const destinoId = document.getElementById('routeDestination')?.value;
     const tipoRuta = document.getElementById('routeType')?.value || 'TERRESTRE';
@@ -6245,15 +6277,27 @@ function calculateRoutePreview() {
     console.log('🔍 Calculando preview:', { origenId, destinoId, tipoRuta });
     console.log('📦 Zonas disponibles:', zonasParaRutas.length);
     
+    // Si no hay zonas cargadas, intentar cargarlas SOLO si no hay selecciones activas
+    // Esto evita interrumpir al usuario cuando está seleccionando
+    if (!zonasParaRutas || zonasParaRutas.length === 0) {
+        if (!origenId && !destinoId) {
+            // No hay selecciones, podemos recargar sin problemas
+            console.warn('⚠️ zonasParaRutas está vacío y no hay selecciones, recargando...');
+            await loadZonasForRutas();
+            return;
+        } else {
+            // Hay selecciones activas - NO recargar para no interrumpir al usuario
+            // Solo mostrar un mensaje y ocultar el preview
+            console.error('❌ zonasParaRutas está vacío pero hay selecciones activas. No se puede calcular preview.');
+            if (previewDiv) previewDiv.style.display = 'none';
+            showNotification('Las zonas no están cargadas. Por favor, recarga la página o haz clic en "Recargar Zonas".', 'warning');
+            return;
+        }
+    }
+    
     if (!origenId || !destinoId) {
         console.log('⚠️ Faltan origen o destino');
         if (previewDiv) previewDiv.style.display = 'none';
-        return;
-    }
-    
-    if (!zonasParaRutas || zonasParaRutas.length === 0) {
-        console.warn('⚠️ zonasParaRutas está vacío, recargando...');
-        loadZonasForRutas().then(() => calculateRoutePreview());
         return;
     }
     
@@ -6339,61 +6383,8 @@ function calcularTiempoEstimado(distanciaKm, tipoRuta) {
     return distanciaKm / velocidad; // tiempo en horas
 }
 
-/**
- * Calcula y muestra la vista previa de la ruta
- */
-function calculateRoutePreview() {
-    const origenId = document.getElementById('routeOrigin')?.value;
-    const destinoId = document.getElementById('routeDestination')?.value;
-    const tipoRuta = document.getElementById('routeType')?.value || 'TERRESTRE';
-    
-    const previewDiv = document.getElementById('routePreview');
-    const distanceDiv = document.getElementById('previewDistance');
-    const timeDiv = document.getElementById('previewTime');
-    
-    if (!origenId || !destinoId || !zonasParaRutas || zonasParaRutas.length === 0) {
-        if (previewDiv) previewDiv.style.display = 'none';
-        return;
-    }
-    
-    // Buscar las zonas
-    const zonaOrigen = zonasParaRutas.find(z => z.id === origenId);
-    const zonaDestino = zonasParaRutas.find(z => z.id === destinoId);
-    
-    if (!zonaOrigen || !zonaDestino) {
-        if (previewDiv) previewDiv.style.display = 'none';
-        return;
-    }
-    
-    // Calcular distancia y tiempo
-    const distancia = calcularDistanciaGeografica(
-        zonaOrigen.coordenadaX,
-        zonaOrigen.coordenadaY,
-        zonaDestino.coordenadaX,
-        zonaDestino.coordenadaY
-    );
-    
-    const tiempo = calcularTiempoEstimado(distancia, tipoRuta);
-    
-    // Mostrar resultados
-    if (previewDiv) previewDiv.style.display = 'block';
-    if (distanceDiv) distanceDiv.textContent = `${distancia.toFixed(2)} km`;
-    if (timeDiv) {
-        const horas = Math.floor(tiempo);
-        const minutos = Math.round((tiempo - horas) * 60);
-        timeDiv.textContent = horas > 0 
-            ? `${horas}h ${minutos}min` 
-            : `${minutos} minutos`;
-    }
-    
-    console.log('📏 Cálculo de ruta:', {
-        origen: zonaOrigen.nombre,
-        destino: zonaDestino.nombre,
-        distancia: distancia.toFixed(2) + ' km',
-        tiempo: tiempo.toFixed(2) + ' horas',
-        tipoRuta
-    });
-}
+// NOTA: La función calculateRoutePreview() está definida arriba (línea ~6236)
+// Esta era una versión duplicada que ha sido eliminada
 //=========================================================
 // PANEL DE RUTAS
 //=========================================================
@@ -6498,29 +6489,46 @@ let rutasPanelInicializado = false;
                 console.log('📤 Enviando ruta al servidor:', routeData);
 
                 try {
+                    console.log('📤 Enviando datos al servidor:', routeData);
                     const resp = await fetch(`${API_URL}/rutas`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(routeData)
                     });
 
-                    const result = await resp.json().catch(() => ({}));
+                    console.log('📥 Respuesta del servidor - Status:', resp.status, resp.statusText);
+                    
+                    let result = {};
+                    try {
+                        const text = await resp.text();
+                        console.log('📥 Respuesta del servidor - Body:', text);
+                        if (text) {
+                            result = JSON.parse(text);
+                        }
+                    } catch (parseError) {
+                        console.warn('⚠️ No se pudo parsear la respuesta JSON:', parseError);
+                    }
 
-                    if (resp.ok) {
+                    if (resp.ok && (result.success === undefined || result.success === true)) {
+                        console.log('✅ Ruta creada exitosamente');
                         showNotification(
                             `✅ Ruta creada: ${distancia.toFixed(2)} km en ${tiempoEstimado.toFixed(2)} horas`, 
                             'success'
                         );
+                        // Solo resetear el formulario cuando la creación es exitosa
                         routeForm.reset();
                         document.getElementById('routePreview').style.display = 'none';
                         await loadAllRoutes();
                     } else {
                         console.error('❌ Error del servidor:', result);
-                        showNotification(result.message || 'No se pudo crear la ruta', 'error');
+                        const errorMessage = result.message || 'No se pudo crear la ruta. Verifica los datos ingresados.';
+                        showNotification(errorMessage, 'error');
+                        // NO resetear el formulario cuando hay error - mantener los datos para que el usuario pueda corregirlos
                     }
                 } catch (error) {
-                    console.error('❌ Error creando ruta:', error);
-                    showNotification('Error de conexión', 'error');
+                    console.error('❌ Error de conexión al crear ruta:', error);
+                    showNotification('Error de conexión con el servidor. Verifica tu conexión e intenta nuevamente.', 'error');
+                    // NO resetear el formulario cuando hay error de conexión
                 }
             });
         }
@@ -6590,90 +6598,9 @@ async function recargarZonasRutas() {
     }
 }
 
-
-// Carga las zonas desde la API y llena los selects de origen/destino
-async function loadZonasForRutas() {
-    const selectOrigen  = document.getElementById('routeOrigin');
-    const selectDestino = document.getElementById('routeDestination');
-    const evacOrigen = document.getElementById('evacOrigin');
-    const evacDestino = document.getElementById('evacDestination');
-    const optimalOrigin = document.getElementById('optimalOrigin');
-    const optimalDestination = document.getElementById('optimalDestination');
-
-    if (!selectOrigen || !selectDestino) {
-        console.warn('No se encontraron los selects #routeOrigin o #routeDestination');
-        return;
-    }
-
-    try {
-        const resp = await fetch(`${API_URL}/zonas`, { method: 'GET' });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-        const zonas = await resp.json();
-        
-        console.log('✅ Zonas cargadas para rutas:', zonas.length);
-
-        // Limpiar y llenar select de origen (crear rutas)
-        selectOrigen.innerHTML  = '<option value="">Selecciona zona origen</option>';
-        selectDestino.innerHTML = '<option value="">Selecciona zona destino</option>';
-        
-        // Limpiar y llenar selects de evacuación
-        if (evacOrigen) evacOrigen.innerHTML = '<option value="">Selecciona zona origen</option>';
-        if (evacDestino) evacDestino.innerHTML = '<option value="">Selecciona zona destino</option>';
-        
-        // Limpiar y llenar selects de rutas óptimas
-        if (optimalOrigin) optimalOrigin.innerHTML = '<option value="">Selecciona origen</option>';
-        if (optimalDestination) optimalDestination.innerHTML = '<option value="">Selecciona destino</option>';
-
-        zonas.forEach(z => {
-            // Para crear rutas
-            const opt1 = document.createElement('option');
-            opt1.value = z.id;
-            opt1.textContent = z.nombre || z.id;
-            selectOrigen.appendChild(opt1);
-
-            const opt2 = document.createElement('option');
-            opt2.value = z.id;
-            opt2.textContent = z.nombre || z.id;
-            selectDestino.appendChild(opt2);
-
-            // Para evacuaciones
-            if (evacOrigen) {
-                const opt3 = document.createElement('option');
-                opt3.value = z.id;
-                opt3.textContent = z.nombre || z.id;
-                evacOrigen.appendChild(opt3);
-            }
-
-            if (evacDestino) {
-                const opt4 = document.createElement('option');
-                opt4.value = z.id;
-                opt4.textContent = z.nombre || z.id;
-                evacDestino.appendChild(opt4);
-            }
-            
-            // Para rutas óptimas
-            if (optimalOrigin) {
-                const opt5 = document.createElement('option');
-                opt5.value = z.id;
-                opt5.textContent = z.nombre || z.id;
-                optimalOrigin.appendChild(opt5);
-            }
-            
-            if (optimalDestination) {
-                const opt6 = document.createElement('option');
-                opt6.value = z.id;
-                opt6.textContent = z.nombre || z.id;
-                optimalDestination.appendChild(opt6);
-            }
-        });
-        
-        console.log('✅ Selects de zonas poblados correctamente');
-    } catch (err) {
-        console.error('Error cargando zonas para rutas:', err);
-        showNotification('No se pudieron cargar las zonas para el panel de rutas', 'error');
-    }
-}
+// NOTA: La función loadZonasForRutas() está definida arriba (línea ~6106)
+// Esta era una versión duplicada que NO guardaba/restauraba valores seleccionados
+// y ha sido eliminada para evitar que se pierdan las selecciones del usuario
 
 // Maneja el envío del formulario "Crear Ruta Manualmente"
 async function crearRutaManual(event) {
@@ -7415,53 +7342,9 @@ async function loadEvacuaciones() {
         teamForm.addEventListener('submit', handleAdminTeamSubmit);
     }
     // ===== FORMULARIOS RUTAS =====
-    const routeForm = document.getElementById('createRouteForm');
+    // NOTA: El formulario de rutas se inicializa en initializeRoutesPanel()
+    // cuando se cambia a la pestaña de rutas, para evitar conflictos con múltiples listeners
     const evacForm = document.getElementById('planEvacuationForm');
-
-    if (routeForm) {
-        routeForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const routeData = {
-                id: document.getElementById('routeId').value,
-                origen: document.getElementById('routeOrigin').value,
-                destino: document.getElementById('routeDestination').value,
-                distancia: parseFloat(document.getElementById('routeDistance').value),
-                tiempoEstimado: parseFloat(document.getElementById('routeTime').value),
-                tipo: document.getElementById('routeType').value,
-                capacidadMaxima: parseInt(document.getElementById('routeCapacity').value),
-                nivelRiesgo: parseFloat(document.getElementById('routeRisk').value)
-            };
-
-        // Validación básica
-        if (!routeData.id || !routeData.origen || !routeData.destino) {
-            showNotification('Completa todos los campos obligatorios', 'error');
-            return;
-        }
-
-        try {
-            const resp = await fetch(`${API_URL}/rutas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(routeData)
-            });
-
-            const result = await resp.json().catch(() => ({}));
-
-            if (resp.ok && (result.success === undefined || result.success === true)) {
-                showNotification('Ruta creada exitosamente', 'success');
-                routeForm.reset();
-                loadAllRoutes();
-            } else {
-                console.error('Error al crear ruta:', result);
-                showNotification(result.message || 'No se pudo crear la ruta', 'error');
-            }
-        } catch (error) {
-            console.error('Error de conexión al crear ruta:', error);
-            showNotification('Error de conexión con la API', 'error');
-        }
-    });
-    }
 
     if (evacForm) {
         evacForm.addEventListener('submit', planificarEvacuacion);
