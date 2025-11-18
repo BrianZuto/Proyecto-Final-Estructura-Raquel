@@ -3733,20 +3733,22 @@ function showMap() {
     // FUNCIONES DEL ARBOL DE DISTRIBUCIÓN
     // ==========================================================
 
-    function initTree() {
-        console.log('🌳 Inicializando árbol D3...');
-        
+    function initTree(){
+            console.log('🌳 Inicializando árbol D3...');
+    
         const svgElement = document.getElementById("tree-svg");
         if (!svgElement) {
             console.error('❌ No se encontró el elemento #tree-svg');
             return;
         }
 
-        treeSvg = d3.select("#tree-svg");
+        // Limpiar SVG existente
+        d3.select("#tree-svg").selectAll("*").remove();
         
-        // Limpiar cualquier contenido previo
-        treeSvg.selectAll("*").remove();
-        
+        treeSvg = d3.select("#tree-svg")
+            .attr("width", "100%")
+            .attr("height", treeHeight);
+
         // Configurar zoom
         treeZoom = d3.zoom()
             .scaleExtent([0.1, 3])
@@ -3756,19 +3758,16 @@ function showMap() {
 
         treeSvg.call(treeZoom);
 
-        // Crear grupo principal
+        // Crear grupo principal centrado
         treeG = treeSvg.append("g")
             .attr("transform", `translate(${treeWidth / 2}, 50)`);
 
-        // Configurar layout del árbol
+        // Configurar layout del árbol con mejor separación
         d3Tree = d3.tree()
-            .size([treeWidth - 200, treeHeight - 100])
-            .separation((a, b) => (a.parent === b.parent ? 1 : 1.5));
+            .size([treeWidth - 200, treeHeight - 150])
+            .separation((a, b) => (a.parent === b.parent ? 1.2 : 1.5));
 
-        console.log('✅ Árbol D3 inicializado');
-        
-        // Cargar recursos para el select
-        loadTreeResources();
+        console.log('✅ Árbol D3 inicializado correctamente');
     }
 
     function treeDiagonal(s, d) {
@@ -3779,11 +3778,11 @@ function showMap() {
     }
 
     function getTreeColorByPriority(priority) {
-        if (priority >= 9) return "#e53e3e"; // Rojo (crítica)
-        if (priority >= 7) return "#ed8936"; // Naranja (alta)
-        if (priority >= 5) return "#ecc94b"; // Amarillo (media)
-        if (priority >= 3) return "#48bb78"; // Verde (baja)
-        return "#a0aec0"; // Gris (sin prioridad)
+        priority = priority || 5;
+        if (priority >= 9) return "#e53e3e"; // Rojo crítico
+        if (priority >= 7) return "#667eea"; // Morado alto
+        if (priority >= 4) return "#48bb78"; // Verde medio
+        return "#ed8936"; // Naranja bajo
     }
 
     function updateTreeVisualization() {
@@ -3793,17 +3792,20 @@ function showMap() {
         }
 
         console.log('🎨 Actualizando visualización del árbol...');
-        console.log('📊 Datos del árbol:', treeData);
+        console.log('📊 Estructura del árbol:', treeData);
 
         try {
             // Crear jerarquía desde los datos
-            treeRoot = d3.hierarchy(treeData);
+            treeRoot = d3.hierarchy(treeData, d => {
+                // Si el nodo está colapsado, no mostrar sus hijos
+                if (d._collapsed) return null;
+                return d.children;
+            });
             
             // Aplicar el layout del árbol
             d3Tree(treeRoot);
 
-            console.log('✅ Jerarquía creada:', treeRoot);
-            console.log('✅ Nodos descendientes:', treeRoot.descendants().length);
+            console.log('✅ Jerarquía creada con', treeRoot.descendants().length, 'nodos');
 
             // Actualizar estadísticas
             updateTreeStats();
@@ -3815,6 +3817,7 @@ function showMap() {
             console.log('✅ Visualización completada');
         } catch (error) {
             console.error('❌ Error en updateTreeVisualization:', error);
+            showNotification('Error al actualizar la visualización del árbol', 'error');
         }
     }
 
@@ -3833,7 +3836,7 @@ function showMap() {
         console.log('🔗 Enlaces a dibujar:', links.length);
 
         const link = treeG.selectAll(".d3-link")
-            .data(links, d => `${d.source.data.id}-${d.target.data.id}`);
+            .data(links, d => d.target.data.id);
 
         // Eliminar enlaces antiguos
         link.exit()
@@ -3846,9 +3849,14 @@ function showMap() {
         const linkEnter = link.enter()
             .append("path")
             .attr("class", "d3-link")
-            .attr("d", d => treeDiagonal(d.source, d.target))
+            .attr("d", d => {
+                return `M ${d.source.x} ${d.source.y}
+                        C ${d.source.x} ${(d.source.y + d.target.y) / 2},
+                        ${d.target.x} ${(d.source.y + d.target.y) / 2},
+                        ${d.target.x} ${d.target.y}`;
+            })
             .style("opacity", 0)
-            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority))
+            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority || 5))
             .attr("stroke-width", 2)
             .attr("fill", "none");
 
@@ -3856,8 +3864,13 @@ function showMap() {
         linkEnter.merge(link)
             .transition()
             .duration(duration)
-            .attr("d", d => treeDiagonal(d.source, d.target))
-            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority))
+            .attr("d", d => {
+                return `M ${d.source.x} ${d.source.y}
+                        C ${d.source.x} ${(d.source.y + d.target.y) / 2},
+                        ${d.target.x} ${(d.source.y + d.target.y) / 2},
+                        ${d.target.x} ${d.target.y}`;
+            })
+            .attr("stroke", d => getTreeColorByPriority(d.target.data.priority || 5))
             .style("opacity", 1);
 
         // ==================== NODES (Nodos) ====================
@@ -3880,6 +3893,7 @@ function showMap() {
             .attr("class", "d3-node")
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .style("opacity", 0)
+            .style("cursor", "pointer")
             .on("click", (event, d) => {
                 event.stopPropagation();
                 toggleTreeNode(event, d);
@@ -3888,50 +3902,55 @@ function showMap() {
         // Círculo del nodo
         nodeEnter.append("circle")
             .attr("r", treeNodeRadius)
-            .attr("stroke", d => getTreeColorByPriority(d.data.priority))
+            .attr("stroke", d => getTreeColorByPriority(d.data.priority || 5))
             .attr("fill", "#fff")
-            .attr("stroke-width", 3);
+            .attr("stroke-width", 3)
+            .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.2))");
 
-        // Texto: Nombre
+        // Texto: Nombre del nodo
         nodeEnter.append("text")
-            .attr("dy", -treeNodeRadius - 8)
+            .attr("dy", -treeNodeRadius - 10)
             .attr("text-anchor", "middle")
             .attr("fill", "#2d3748")
             .style("font-weight", "700")
-            .style("font-size", "13px")
-            .text(d => d.data.name);
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .text(d => {
+                const name = d.data.name || 'Sin nombre';
+                return name.length > 20 ? name.substring(0, 20) + '...' : name;
+            });
 
-        // Texto: Información adicional
+        // Texto: Cantidad de recursos
         nodeEnter.append("text")
             .attr("dy", 5)
             .attr("text-anchor", "middle")
-            .attr("fill", "#4a5568")
-            .style("font-size", "10px")
-            .text(d => d.data.info || `${d.data.quantity} unidades`);
-
-        // Texto: Cantidad
-        nodeEnter.append("text")
-            .attr("dy", treeNodeRadius + 18)
-            .attr("text-anchor", "middle")
             .attr("fill", "#667eea")
-            .style("font-size", "12px")
+            .style("font-size", "14px")
             .style("font-weight", "700")
-            .text(d => d.data.quantity > 0 ? `📦 ${d.data.quantity}` : '');
+            .style("pointer-events", "none")
+            .text(d => d.data.quantity > 0 ? d.data.quantity : '');
 
-        // Indicador de expansión/colapso (solo si tiene hijos)
+        // Indicador de expansión/colapso
         nodeEnter.each(function(d) {
-            if (d.data.children && d.data.children.length > 0) {
+            if ((d.data.children && d.data.children.length > 0) || 
+                (d.data._children && d.data._children.length > 0)) {
+                
                 const g = d3.select(this);
                 
+                const hasChildren = d.data.children && d.data.children.length > 0;
+                
                 g.append("circle")
+                    .attr("class", "collapse-indicator")
                     .attr("r", 8)
                     .attr("cx", treeNodeRadius - 5)
                     .attr("cy", -treeNodeRadius + 5)
-                    .attr("fill", d.data._collapsed ? "#f56565" : "#48bb78")
+                    .attr("fill", hasChildren ? "#48bb78" : "#f56565")
                     .attr("stroke", "#fff")
-                    .attr("stroke-width", 2);
+                    .attr("stroke-width", 2)
+                    .style("cursor", "pointer");
 
                 g.append("text")
+                    .attr("class", "collapse-text")
                     .attr("x", treeNodeRadius - 5)
                     .attr("y", -treeNodeRadius + 5)
                     .attr("dy", 4)
@@ -3939,7 +3958,8 @@ function showMap() {
                     .attr("fill", "#fff")
                     .style("font-size", "10px")
                     .style("font-weight", "bold")
-                    .text(d.data._collapsed ? "+" : "-");
+                    .style("pointer-events", "none")
+                    .text(hasChildren ? "-" : "+");
             }
         });
 
@@ -3971,16 +3991,23 @@ function showMap() {
     }
 
     function toggleTreeNode(event, d) {
-        if (!d.data.children || d.data.children.length === 0) return;
+        if (!d.data.children && !d.data._children) {
+            console.log('ℹ️ Este nodo no tiene hijos');
+            return;
+        }
         
-        d.data._collapsed = !d.data._collapsed;
-        
-        if (d.data._collapsed) {
+        if (d.data.children) {
+            // Colapsar
             d.data._children = d.data.children;
             d.data.children = null;
+            d.data._collapsed = true;
+            console.log('📦 Nodo colapsado:', d.data.name);
         } else {
+            // Expandir
             d.data.children = d.data._children;
             d.data._children = null;
+            d.data._collapsed = false;
+            console.log('📂 Nodo expandido:', d.data.name);
         }
         
         updateTreeVisualization();
@@ -4172,21 +4199,21 @@ function showMap() {
     }
 
     function treeCenterView() {
-        if (!treeSvg) return;
+        if (!treeSvg || !treeZoom) return;
         treeSvg.transition()
             .duration(750)
-            .call(treeZoom.transform, d3.zoomIdentity.translate(treeWidth / 2, 50));
+            .call(treeZoom.transform, d3.zoomIdentity.translate(treeWidth / 2, 50).scale(1));
     }
 
     function treeZoomIn() {
-        if (!treeSvg) return;
+        if (!treeSvg || !treeZoom) return;
         treeSvg.transition()
             .duration(300)
             .call(treeZoom.scaleBy, 1.3);
     }
 
     function treeZoomOut() {
-        if (!treeSvg) return;
+        if (!treeSvg || !treeZoom) return;
         treeSvg.transition()
             .duration(300)
             .call(treeZoom.scaleBy, 0.7);
@@ -4209,7 +4236,7 @@ function showMap() {
         }
         expand(treeData);
         updateTreeVisualization();
-        showNotification("Todos los nodos expandidos", "success");
+        showNotification("✅ Todos los nodos expandidos", "success");
     }
 
     function treeCollapseAll() {
@@ -4219,13 +4246,13 @@ function showMap() {
                 node.children = null;
                 node._collapsed = true;
             }
-            if (node._children) {
-                node._children.forEach(collapse);
+            if (node.children) {
+                node.children.forEach(collapse);
             }
         }
         collapse(treeData);
         updateTreeVisualization();
-        showNotification("Todos los nodos contraídos", "success");
+        showNotification("✅ Todos los nodos contraídos", "success");
     }
 
     function treeClearAll() {
@@ -4460,24 +4487,17 @@ async function manualUpdateTree() {
         console.log('🌳 CARGANDO PESTAÑA DEL ÁRBOL');
         console.log('🌳 ========================================');
         
-        // Inicializar el SVG del árbol si no existe
-        if (!d3Tree) {
-            console.log('🌳 Inicializando árbol por primera vez...');
-            initTree();
-        }
+        // Inicializar el SVG del árbol
+        initTree();
         
         // Esperar un momento para que el SVG esté listo
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Cargar recursos y generar el árbol
         console.log('🌳 Actualizando desde recursos...');
         await updateTreeFromResources();
         
-        // Forzar actualización de la visualización
-        console.log('🌳 Forzando actualización de visualización...');
-        setTimeout(() => {
-            updateTreeVisualization();
-        }, 100);
+        console.log('🌳 Pestaña del árbol cargada completamente');
     }
     //=========================================================
     // FUNCIONES SWITCH DE PESTAÑAS
