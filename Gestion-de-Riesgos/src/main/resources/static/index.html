@@ -698,6 +698,368 @@
 }
 
 /* ===================================
+   COLA DE PRIORIDAD
+   =================================== */
+.cola-prioridad-container {
+    padding: 20px;
+}
+
+.cola-prioridad-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.cola-prioridad-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cola-prioridad-stats .stat-label {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.cola-prioridad-stats .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.cola-prioridad-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cola-item {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.cola-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.cola-item.prioridad-critica {
+    border-left: 4px solid #e53e3e;
+    background: #fff5f5;
+}
+
+.cola-item.prioridad-alta {
+    border-left: 4px solid #dd6b20;
+    background: #fffaf0;
+}
+
+.cola-item.prioridad-media {
+    border-left: 4px solid #d69e2e;
+    background: #fffbf0;
+}
+
+.cola-item.prioridad-baja {
+    border-left: 4px solid #38a169;
+    background: #f0fff4;
+}
+
+.cola-item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.cola-item-number {
+    background: #edf2f7;
+    color: #4a5568;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.cola-item-title {
+    flex: 1;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1.1rem;
+}
+
+.cola-item-priority {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #edf2f7;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.cola-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.info-row i {
+    color: #718096;
+    margin-right: 6px;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4299e1, #3182ce);
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* ===================================
+   MAPA DE RECURSOS
+   =================================== */
+.mapa-recursos-container {
+    padding: 20px;
+}
+
+.mapa-recursos-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.mapa-recursos-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    text-align: center;
+}
+
+.mapa-recursos-stats .stat-label {
+    font-size: 0.85rem;
+    color: #718096;
+    text-align: center;
+}
+
+.mapa-recursos-stats .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    text-align: center;
+}
+
+.mapa-recursos-tipos {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.mapa-recursos-tipos h4 {
+    margin: 0 0 12px 0;
+    color: #2d3748;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.tipos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.tipo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    min-width: 200px;
+    max-width: 300px;
+    flex: 0 0 auto;
+}
+
+.tipo-nombre {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.tipo-cantidad {
+    background: #edf2f7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.mapa-recursos-rutas {
+    margin-top: 20px;
+}
+
+.mapa-recursos-rutas h4 {
+    margin: 0 0 16px 0;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+/* Grid de 3 columnas para las tarjetas de rutas */
+.mapa-recursos-rutas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* Responsive: 2 columnas en pantallas medianas */
+@media (max-width: 1200px) {
+    .mapa-recursos-rutas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Responsive: 1 columna en pantallas pequeñas */
+@media (max-width: 768px) {
+    .mapa-recursos-rutas-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ruta-recursos-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.ruta-recursos-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.ruta-recursos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.ruta-recursos-header h5 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ruta-info {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 600;
+}
+
+.ruta-recursos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.recurso-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f7fafc;
+    border-radius: 6px;
+    gap: 12px;
+}
+
+.recurso-nombre {
+    flex: 1;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.recurso-tipo {
+    font-size: 0.85rem;
+    color: #718096;
+    padding: 4px 8px;
+    background: #edf2f7;
+    border-radius: 4px;
+}
+
+.recurso-cantidad {
+    font-weight: 700;
+    color: #4299e1;
+}
+
+.empty-state-small {
+    padding: 20px;
+    text-align: center;
+    color: #718096;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.empty-state-small i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: #cbd5e0;
+}
+
+/* ===================================
    LISTA DE EQUIPOS
    =================================== */
 .teams-list {
@@ -1405,6 +1767,44 @@
                         <div id="equiposDisplay" class="teams-list">
                             <div class="loading-state">
                                 <i class="fas fa-spinner fa-spin"></i> Cargando equipos...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Cola de Prioridad (Evacuaciones) -->
+                    <div class="section-container">
+                        <div class="section-header">
+                            <h2><i class="fas fa-list-ol"></i> Cola de Prioridad - Evacuaciones</h2>
+                            <div>
+                                <button class="btn-refresh" onclick="priorizarCola()" title="Priorizar cola">
+                                    <i class="fas fa-sort-amount-down"></i> Priorizar
+                                </button>
+                                <button class="btn-refresh" onclick="procesarSiguienteEvacuacion()" title="Procesar siguiente evacuación">
+                                    <i class="fas fa-play"></i> Procesar Siguiente
+                                </button>
+                                <button class="btn-refresh" onclick="loadColaPrioridad()">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="colaPrioridadDisplay" class="cola-prioridad-container">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando cola de evacuaciones...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Mapa de Recursos -->
+                    <div class="section-container">
+                        <div class="section-header">
+                            <h2><i class="fas fa-map-marked-alt"></i> Mapa de Recursos por Ruta</h2>
+                            <button class="btn-refresh" onclick="loadMapaRecursos()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                        <div id="mapaRecursosDisplay" class="mapa-recursos-container">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando mapa de recursos...
                             </div>
                         </div>
                     </div>
@@ -3054,6 +3454,10 @@ function showNotification(message, type = 'info') {
             renderRecursosInicio(recursosData);
             renderEquiposInicio(equiposData);
 
+            // Cargar ColaPrioridad y MapaRecursos
+            await loadColaPrioridad();
+            await loadMapaRecursos();
+
         } catch (error) {
             console.error('Error cargando datos de inicio:', error);
             document.getElementById('zonasDisplay').innerHTML = `
@@ -3289,6 +3693,446 @@ function showNotification(message, type = 'info') {
             `;
             cont.appendChild(card);
         });
+    }
+
+    // ==========================
+    //   COLA DE PRIORIDAD
+    // ==========================
+    async function loadColaPrioridad() {
+        const cont = document.getElementById('colaPrioridadDisplay');
+        if (!cont) {
+            console.warn('Elemento colaPrioridadDisplay no encontrado');
+            return;
+        }
+
+        // Timeout de seguridad: si después de 10 segundos no hay respuesta, mostrar error
+        const timeoutId = setTimeout(() => {
+            if (cont.innerHTML.includes('Cargando')) {
+                cont.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Timeout al cargar datos</h3>
+                        <p>La solicitud está tardando demasiado. Verifica tu conexión y que el servidor esté funcionando.</p>
+                    </div>`;
+            }
+        }, 10000);
+
+        try {
+            cont.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando cola de evacuaciones...
+                </div>`;
+
+            const [todasRes, statsRes] = await Promise.all([
+                fetch(`${API_URL}/cola/todas`).catch(e => {
+                    console.error('Error fetch /cola/todas:', e);
+                    return { ok: false, status: 500 };
+                }),
+                fetch(`${API_URL}/cola/estadisticas`).catch(e => {
+                    console.error('Error fetch /cola/estadisticas:', e);
+                    return { ok: false, status: 500 };
+                })
+            ]);
+
+            let todas = [];
+            let stats = null;
+
+            try {
+                if (todasRes.ok) {
+                    const data = await safeJson(todasRes);
+                    todas = Array.isArray(data) ? data : [];
+                } else {
+                    console.warn('Respuesta no OK de /cola/todas:', todasRes.status);
+                }
+            } catch (e) {
+                console.error('Error parseando respuesta de /cola/todas:', e);
+            }
+
+            try {
+                if (statsRes.ok) {
+                    stats = await safeJson(statsRes);
+                } else {
+                    console.warn('Respuesta no OK de /cola/estadisticas:', statsRes.status);
+                }
+            } catch (e) {
+                console.error('Error parseando respuesta de /cola/estadisticas:', e);
+            }
+
+            // Si no hay evacuaciones, mostrar mensaje apropiado
+            if (!Array.isArray(todas) || todas.length === 0) {
+                let html = '<div class="cola-prioridad-stats">';
+                if (stats) {
+                    html += `
+                        <div class="stat-item">
+                            <span class="stat-label">Evacuaciones en cola:</span>
+                            <span class="stat-value">${stats.tamano || 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Procesadas:</span>
+                            <span class="stat-value">${stats.historialSize || 0}</span>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="stat-item">
+                            <span class="stat-label">Evacuaciones en cola:</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Procesadas:</span>
+                            <span class="stat-value">0</span>
+                        </div>`;
+                }
+                html += '</div>';
+                html += `
+                    <div class="empty-state">
+                        <i class="fas fa-list-ol"></i>
+                        <h3>No hay evacuaciones en la cola</h3>
+                        <p>Las evacuaciones aparecerán aquí cuando se planifiquen.</p>
+                    </div>`;
+                cont.innerHTML = html;
+                return;
+            }
+
+            // Ordenar por prioridad descendente
+            todas.sort((a, b) => (b.prioridad || 0) - (a.prioridad || 0));
+
+            let html = '<div class="cola-prioridad-stats">';
+            if (stats) {
+                html += `
+                    <div class="stat-item">
+                        <span class="stat-label">Evacuaciones en cola:</span>
+                        <span class="stat-value">${stats.tamano || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Procesadas:</span>
+                        <span class="stat-value">${stats.historialSize || 0}</span>
+                    </div>`;
+            }
+            html += '</div>';
+
+            html += '<div class="cola-prioridad-list">';
+            todas.forEach((ev, index) => {
+                const prioridad = ev.prioridad || 0;
+                const porcentaje = ev.porcentajeCompletado || 0;
+                const estado = ev.estado || 'PENDIENTE';
+                
+                let prioridadClass = 'prioridad-baja';
+                if (prioridad >= 7) prioridadClass = 'prioridad-critica';
+                else if (prioridad >= 5) prioridadClass = 'prioridad-alta';
+                else if (prioridad >= 3) prioridadClass = 'prioridad-media';
+
+                html += `
+                    <div class="cola-item ${prioridadClass}">
+                        <div class="cola-item-header">
+                            <div class="cola-item-number">#${index + 1}</div>
+                            <div class="cola-item-title">${ev.nombre || ev.id || 'Evacuación'}</div>
+                            <div class="cola-item-priority">
+                                <i class="fas fa-star"></i> ${prioridad}
+                            </div>
+                        </div>
+                        <div class="cola-item-info">
+                            <div class="info-row">
+                                <span><i class="fas fa-users"></i> Personas a evacuar: <strong>${ev.personasAEvacuar || 0}</strong></span>
+                                <span><i class="fas fa-check-circle"></i> Evacuadas: <strong>${ev.personasEvacuadas || 0}</strong></span>
+                            </div>
+                            <div class="info-row">
+                                <span><i class="fas fa-exclamation-triangle"></i> Urgencia: <strong>${ev.nivelUrgencia || 'N/A'}</strong></span>
+                                <span><i class="fas fa-info-circle"></i> Estado: <strong>${estado}</strong></span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${Math.min(100, porcentaje)}%"></div>
+                                </div>
+                                <span class="progress-text">${porcentaje.toFixed(1)}% completado</span>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+
+            clearTimeout(timeoutId);
+            cont.innerHTML = html;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('Error cargando cola de prioridad:', error);
+            let errorHtml = '<div class="cola-prioridad-stats">';
+            errorHtml += `
+                <div class="stat-item">
+                    <span class="stat-label">Evacuaciones en cola:</span>
+                    <span class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Procesadas:</span>
+                    <span class="stat-value">0</span>
+                </div>`;
+            errorHtml += '</div>';
+            errorHtml += `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando cola de prioridad</h3>
+                    <p>${error.message || 'Error desconocido'}</p>
+                    <p style="font-size: 0.85rem; color: #718096; margin-top: 10px;">Revisa la consola del navegador para más detalles.</p>
+                </div>`;
+            cont.innerHTML = errorHtml;
+        }
+    }
+
+    async function priorizarCola() {
+        try {
+            const resp = await fetch(`${API_URL}/cola/priorizar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await resp.json().catch(() => ({}));
+
+            if (resp.ok && result.success) {
+                showNotification('Cola priorizada correctamente', 'success');
+                await loadColaPrioridad();
+            } else {
+                showNotification(result.message || 'Error al priorizar la cola', 'error');
+            }
+        } catch (error) {
+            console.error('Error priorizando cola:', error);
+            showNotification('Error de conexión al priorizar la cola', 'error');
+        }
+    }
+
+    async function procesarSiguienteEvacuacion() {
+        try {
+            const resp = await fetch(`${API_URL}/cola/procesar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await resp.json().catch(() => ({}));
+
+            if (resp.ok && result.success) {
+                showNotification(`Evacuación ${result.id} procesada. Estado: ${result.estado}`, 'success');
+                await loadColaPrioridad();
+                await loadInicioData(); // Actualizar datos generales
+            } else {
+                showNotification(result.message || 'No hay evacuaciones para procesar', 'warning');
+            }
+        } catch (error) {
+            console.error('Error procesando evacuación:', error);
+            showNotification('Error de conexión al procesar la evacuación', 'error');
+        }
+    }
+
+    // ==========================
+    //   MAPA DE RECURSOS
+    // ==========================
+    async function loadMapaRecursos() {
+        const cont = document.getElementById('mapaRecursosDisplay');
+        if (!cont) {
+            console.warn('Elemento mapaRecursosDisplay no encontrado');
+            return;
+        }
+
+        // Timeout de seguridad: si después de 10 segundos no hay respuesta, mostrar error
+        const timeoutId = setTimeout(() => {
+            if (cont.innerHTML.includes('Cargando')) {
+                cont.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Timeout al cargar datos</h3>
+                        <p>La solicitud está tardando demasiado. Verifica tu conexión y que el servidor esté funcionando.</p>
+                    </div>`;
+            }
+        }, 10000);
+
+        try {
+            cont.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando mapa de recursos...
+                </div>`;
+
+            const [recursosRes, rutasRes, statsRes] = await Promise.all([
+                fetch(`${API_URL}/mapa/recursos/todos`).catch(e => {
+                    console.error('Error fetch /mapa/recursos/todos:', e);
+                    return { ok: false, status: 500 };
+                }),
+                fetch(`${API_URL}/rutas`).catch(e => {
+                    console.error('Error fetch /rutas:', e);
+                    return { ok: false, status: 500 };
+                }),
+                fetch(`${API_URL}/mapa/estadisticas`).catch(e => {
+                    console.error('Error fetch /mapa/estadisticas:', e);
+                    return { ok: false, status: 500 };
+                })
+            ]);
+
+            let recursos = [];
+            let rutas = [];
+            let stats = null;
+
+            try {
+                if (recursosRes.ok) {
+                    const data = await safeJson(recursosRes);
+                    recursos = Array.isArray(data) ? data : [];
+                } else {
+                    console.warn('Respuesta no OK de /mapa/recursos/todos:', recursosRes.status);
+                }
+            } catch (e) {
+                console.error('Error parseando respuesta de /mapa/recursos/todos:', e);
+            }
+
+            try {
+                if (rutasRes.ok) {
+                    const data = await safeJson(rutasRes);
+                    rutas = Array.isArray(data) ? data : [];
+                } else {
+                    console.warn('Respuesta no OK de /rutas:', rutasRes.status);
+                }
+            } catch (e) {
+                console.error('Error parseando respuesta de /rutas:', e);
+            }
+
+            try {
+                if (statsRes.ok) {
+                    stats = await safeJson(statsRes);
+                } else {
+                    console.warn('Respuesta no OK de /mapa/estadisticas:', statsRes.status);
+                }
+            } catch (e) {
+                console.error('Error parseando respuesta de /mapa/estadisticas:', e);
+            }
+
+            // Construir HTML con estadísticas si están disponibles
+            let html = '<div class="mapa-recursos-stats">';
+            if (stats) {
+                html += `
+                    <div class="stat-item">
+                        <span class="stat-label">Total recursos:</span>
+                        <span class="stat-value">${stats.totalRecursos || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Rutas con recursos:</span>
+                        <span class="stat-value">${stats.totalRutas || 0}</span>
+                    </div>`;
+            } else {
+                // Si no hay estadísticas, mostrar valores por defecto
+                html += `
+                    <div class="stat-item">
+                        <span class="stat-label">Total recursos:</span>
+                        <span class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Rutas con recursos:</span>
+                        <span class="stat-value">0</span>
+                    </div>`;
+            }
+            html += '</div>';
+
+            // Si no hay recursos y no hay estadísticas, mostrar mensaje vacío
+            if ((!Array.isArray(recursos) || recursos.length === 0) && !stats) {
+                html += `
+                    <div class="empty-state">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <h3>No hay recursos en el mapa</h3>
+                        <p>Los recursos se mostrarán aquí cuando se asignen a rutas. Los recursos se asignan automáticamente cuando tienen una ubicación asociada a una ruta.</p>
+                    </div>`;
+                cont.innerHTML = html;
+                return;
+            }
+
+            // Agregar recursos por tipo si hay estadísticas
+            if (stats && stats.recursosPorTipo) {
+                html += '<div class="mapa-recursos-tipos"><h4>Recursos por Tipo:</h4><div class="tipos-grid">';
+                for (const [tipo, cantidad] of Object.entries(stats.recursosPorTipo)) {
+                    html += `
+                        <div class="tipo-item">
+                            <span class="tipo-nombre">${tipo}</span>
+                            <span class="tipo-cantidad">${cantidad}</span>
+                        </div>`;
+                }
+                html += '</div></div>';
+            }
+
+            // Mostrar recursos agrupados por ruta
+            html += '<div class="mapa-recursos-rutas"><h4>Recursos por Ruta:</h4>';
+            
+            // Crear un mapa de recursos por ruta
+            const recursosPorRuta = new Map();
+            
+            // Para cada ruta, buscar recursos asociados
+            for (const ruta of rutas) {
+                try {
+                    const recursosRutaRes = await fetch(`${API_URL}/mapa/recursos/ruta/${ruta.id}`);
+                    const recursosRuta = await safeJson(recursosRutaRes) || [];
+                    
+                    if (recursosRuta.length > 0) {
+                        recursosPorRuta.set(ruta.id, {
+                            ruta: ruta,
+                            recursos: recursosRuta
+                        });
+                    }
+                } catch (e) {
+                    console.warn(`Error cargando recursos para ruta ${ruta.id}:`, e);
+                }
+            }
+
+            if (recursosPorRuta.size === 0) {
+                html += `
+                    <div class="empty-state-small">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No hay recursos asignados a rutas específicas. Los recursos se asignan automáticamente cuando tienen una ubicación asociada a una ruta.</p>
+                    </div>`;
+            } else {
+                // Abrir el contenedor grid
+                html += '<div class="mapa-recursos-rutas-grid">';
+                
+                for (const [rutaId, data] of recursosPorRuta) {
+                    const ruta = data.ruta;
+                    html += `
+                        <div class="ruta-recursos-card">
+                            <div class="ruta-recursos-header">
+                                <h5><i class="fas fa-route"></i> Ruta ${ruta.id || rutaId}</h5>
+                                <span class="ruta-info">${ruta.origenId || '?'} → ${ruta.destinoId || '?'}</span>
+                            </div>
+                            <div class="ruta-recursos-list">`;
+                    
+                    data.recursos.forEach(recurso => {
+                        html += `
+                            <div class="recurso-item">
+                                <span class="recurso-nombre">${recurso.nombre || recurso.id}</span>
+                                <span class="recurso-tipo">${recurso.tipo || 'N/A'}</span>
+                                <span class="recurso-cantidad">${recurso.cantidadDisponible || 0} ${recurso.unidadMedida || ''}</span>
+                            </div>`;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+                
+                // Cerrar el contenedor grid
+                html += '</div>';
+            }
+
+            html += '</div>';
+            clearTimeout(timeoutId);
+            cont.innerHTML = html;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('Error cargando mapa de recursos:', error);
+            let errorHtml = '<div class="mapa-recursos-stats">';
+            errorHtml += `
+                <div class="stat-item">
+                    <span class="stat-label">Total recursos:</span>
+                    <span class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Rutas con recursos:</span>
+                    <span class="stat-value">0</span>
+                </div>`;
+            errorHtml += '</div>';
+            errorHtml += `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error cargando mapa de recursos</h3>
+                    <p>${error.message || 'Error desconocido'}</p>
+                    <p style="font-size: 0.85rem; color: #718096; margin-top: 10px;">Revisa la consola del navegador para más detalles.</p>
+                </div>`;
+            cont.innerHTML = errorHtml;
+        }
     }
 
     // Funciones del Mapa

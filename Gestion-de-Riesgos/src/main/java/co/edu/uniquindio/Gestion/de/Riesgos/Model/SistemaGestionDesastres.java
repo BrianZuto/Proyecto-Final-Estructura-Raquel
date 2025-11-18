@@ -67,11 +67,26 @@ public class SistemaGestionDesastres {
     
     /**
      * Agrega un recurso al sistema
+     * Si el recurso tiene una ubicación (zona), busca rutas asociadas y las agrega al mapa
      */
     public boolean agregarRecurso(Recurso recurso) {
         if (recurso != null && !recursos.contains(recurso)) {
             recursos.add(recurso);
-            // El recurso se agregará al mapa cuando se asigne a una ruta específica
+            
+            // Si el recurso tiene una ubicación, buscar rutas asociadas y agregarlas al mapa
+            if (recurso.getUbicacionId() != null && !recurso.getUbicacionId().isEmpty()) {
+                // Buscar todas las rutas que tienen esta zona como origen o destino
+                List<Ruta> rutasAsociadas = rutas.stream()
+                    .filter(ruta -> (ruta.getOrigen() != null && ruta.getOrigen().getId().equals(recurso.getUbicacionId())) ||
+                                   (ruta.getDestino() != null && ruta.getDestino().getId().equals(recurso.getUbicacionId())))
+                    .toList();
+                
+                // Agregar el recurso a todas las rutas asociadas
+                for (Ruta ruta : rutasAsociadas) {
+                    asignarRecursoARuta(recurso, ruta);
+                }
+            }
+            
             return true;
         }
         return false;

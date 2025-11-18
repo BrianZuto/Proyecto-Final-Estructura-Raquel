@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.uniquindio.Gestion.de.Riesgos.Enums.NivelUrgencia;
 import co.edu.uniquindio.Gestion.de.Riesgos.Enums.TipoRecurso;
 import co.edu.uniquindio.Gestion.de.Riesgos.Enums.TipoRuta;
+import co.edu.uniquindio.Gestion.de.Riesgos.Estructuras.MapaRecursos;
 import co.edu.uniquindio.Gestion.de.Riesgos.Estructuras.Nodo;
 import co.edu.uniquindio.Gestion.de.Riesgos.Estructuras.Ruta;
 import co.edu.uniquindio.Gestion.de.Riesgos.Model.Administrador;
@@ -626,6 +627,99 @@ public class DisasterRestController {
         return ResponseEntity.ok(data);
     }
 
+    // MapaRecursos: obtener todos los recursos del mapa
+    @GetMapping("/mapa/recursos/todos")
+    public ResponseEntity<List<Map<String, Object>>> obtenerTodosRecursosMapa() {
+        try {
+            List<Recurso> recursos = sistema.obtenerTodosLosRecursosMapa();
+            if (recursos == null) recursos = Collections.emptyList();
+
+            List<Map<String, Object>> data = recursos.stream()
+                .filter(rec -> rec != null)
+                .map(rec -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", rec.getId());
+                    m.put("nombre", rec.getNombre());
+                    m.put("tipo", rec.getTipo() != null ? rec.getTipo().getDescripcion() : null);
+                    m.put("cantidadDisponible", rec.getCantidadDisponible());
+                    m.put("unidadMedida", rec.getUnidadMedida());
+                    m.put("ubicacionId", rec.getUbicacionId());
+                    return m;
+                }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            System.err.println("Error en /mapa/recursos/todos: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    // MapaRecursos: obtener recursos por tipo
+    @GetMapping("/mapa/recursos/tipo/{tipo}")
+    public ResponseEntity<List<Map<String, Object>>> obtenerRecursosPorTipoMapa(@PathVariable String tipo) {
+        try {
+            TipoRecurso tipoRecurso = TipoRecurso.valueOf(tipo.toUpperCase());
+            List<Recurso> recursos = sistema.obtenerRecursosPorTipoMapa(tipoRecurso);
+            if (recursos == null) recursos = Collections.emptyList();
+
+            List<Map<String, Object>> data = recursos.stream().map(rec -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", rec.getId());
+                m.put("nombre", rec.getNombre());
+                m.put("tipo", rec.getTipo() != null ? rec.getTipo().getDescripcion() : null);
+                m.put("cantidadDisponible", rec.getCantidadDisponible());
+                m.put("unidadMedida", rec.getUnidadMedida());
+                m.put("ubicacionId", rec.getUbicacionId());
+                return m;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(data);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // MapaRecursos: obtener estadísticas
+    @GetMapping("/mapa/estadisticas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticasMapa() {
+        try {
+            MapaRecursos mapa = sistema.getMapaRecursos();
+            if (mapa == null) {
+                return ResponseEntity.ok(Map.of(
+                    "totalRecursos", 0,
+                    "totalRutas", 0,
+                    "recursosPorTipo", Collections.emptyMap()
+                ));
+            }
+
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalRecursos", mapa.getTotalRecursos());
+            stats.put("totalRutas", mapa.getTotalRutas());
+            Map<String, Integer> recursosPorTipoMap = new HashMap<>();
+            try {
+                mapa.calcularTotalPorTipo().forEach((tipo, cantidad) -> {
+                    if (tipo != null) {
+                        recursosPorTipoMap.put(tipo.getDescripcion(), cantidad);
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error calculando total por tipo: " + e.getMessage());
+            }
+            stats.put("recursosPorTipo", recursosPorTipoMap);
+
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            System.err.println("Error en /mapa/estadisticas: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of(
+                "totalRecursos", 0,
+                "totalRutas", 0,
+                "recursosPorTipo", Collections.emptyMap()
+            ));
+        }
+    }
+
     // Grafo: obtener rutas desde un nodo
     @GetMapping("/grafo/rutas/desde/{idOrigen}")
     public ResponseEntity<List<Map<String, Object>>> obtenerRutasDesdeGrafo(@PathVariable String idOrigen) {
@@ -691,6 +785,67 @@ public class DisasterRestController {
                 "personasAEvacuar", ev.getPersonasAEvacuar(),
                 "prioridad", ev.calcularPrioridad()
         ));
+    }
+
+    @GetMapping("/cola/todas")
+    public ResponseEntity<List<Map<String, Object>>> obtenerTodasEvacuacionesCola() {
+        try {
+            List<Evacuacion> evacuaciones = sistema.obtenerTodasEvacuacionesCola();
+            if (evacuaciones == null) evacuaciones = Collections.emptyList();
+            
+            List<Map<String, Object>> data = evacuaciones.stream().map(ev -> {
+                if (ev == null) return null;
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", ev.getId());
+                m.put("nombre", ev.getNombre());
+                m.put("nivelUrgencia", ev.getNivelUrgencia() != null ? ev.getNivelUrgencia().getDescripcion() : null);
+                m.put("personasAEvacuar", ev.getPersonasAEvacuar());
+                m.put("personasEvacuadas", ev.getPersonasEvacuadas());
+                m.put("prioridad", ev.calcularPrioridad());
+                m.put("estado", ev.getEstado() != null ? ev.getEstado().name() : null);
+                m.put("porcentajeCompletado", ev.calcularPorcentajeCompletado());
+                return m;
+            }).filter(m -> m != null).collect(Collectors.toList());
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            System.err.println("Error en /cola/todas: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/cola/estadisticas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticasCola() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("tamano", sistema.obtenerTamanoCola());
+            stats.put("estaVacia", sistema.estaVaciaCola());
+            
+            List<Evacuacion> historial = sistema.obtenerHistorialEvacuaciones();
+            stats.put("historialSize", historial != null ? historial.size() : 0);
+            
+            Evacuacion siguiente = sistema.verSiguienteEvacuacionCola();
+            if (siguiente != null) {
+                Map<String, Object> siguienteMap = new HashMap<>();
+                siguienteMap.put("id", siguiente.getId());
+                siguienteMap.put("nombre", siguiente.getNombre());
+                siguienteMap.put("prioridad", siguiente.calcularPrioridad());
+                stats.put("siguiente", siguienteMap);
+            } else {
+                stats.put("siguiente", null);
+            }
+            
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            System.err.println("Error en /cola/estadisticas: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Object> errorStats = new HashMap<>();
+            errorStats.put("tamano", 0);
+            errorStats.put("estaVacia", true);
+            errorStats.put("historialSize", 0);
+            errorStats.put("siguiente", null);
+            return ResponseEntity.ok(errorStats);
+        }
     }
 
     @PostMapping("/cola/priorizar")
@@ -922,7 +1077,7 @@ public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
                 }
             }
             
-            // Cargar recursos
+            // Cargar recursos (después de cargar rutas para que se puedan asignar automáticamente)
             if (datos.containsKey("recursos") && datos.get("recursos") instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> recursos = (List<Map<String, Object>>) datos.get("recursos");
@@ -938,6 +1093,7 @@ public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
                         );
                         if (sistema.agregarRecurso(recurso)) {
                             recursosCreados++;
+                            // El método agregarRecurso ahora automáticamente asigna recursos a rutas asociadas
                         }
                     } catch (Exception e) {
                         System.err.println("Error creando recurso: " + e.getMessage());
