@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -154,8 +155,6 @@ public class DisasterRestController {
     }
 
     // ============ ENDPOINTS DE ZONAS ============
-
-    // Fragmento del método obtenerZonas en DisasterRestController.java
 
     // Fragmento del método obtenerZonas en DisasterRestController.java
 
@@ -890,7 +889,6 @@ public class DisasterRestController {
         return ResponseEntity.ok(Map.of("total", total));
     }
 
-    // ============ ENDPOINTS DE ESTADÍSTICAS ============
 // ============ ENDPOINTS DE ESTADÍSTICAS ============
 
 @GetMapping("/estadisticas")
@@ -1249,6 +1247,80 @@ public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
                     "success", false,
                     "message", "Error al procesar la solicitud: " + e.getMessage()
                 ));
+        }
+    }
+
+    // ============ ENDPOINTS DE ASIGNACIONES ============
+
+    @PostMapping("/asignaciones")
+    public ResponseEntity<Map<String, Object>> asignarRecursoAZona(@RequestBody Map<String, Object> asignacionData) {
+        try {
+            String zonaId = (String) asignacionData.get("zonaId");
+            String recursoId = (String) asignacionData.get("recursoId");
+            int cantidad = ((Number) asignacionData.get("cantidad")).intValue();
+            
+            // Validar que la zona y el recurso existan
+            Zona zona = sistema.buscarZona(zonaId);
+            if (zona == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Zona no encontrada"));
+            }
+            
+            Recurso recurso = sistema.buscarRecurso(recursoId);
+            if (recurso == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Recurso no encontrado"));
+            }
+            
+            // Verificar que hay suficiente cantidad disponible
+            if (recurso.getCantidadDisponible() < cantidad) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "No hay suficiente cantidad disponible"));
+            }
+            
+            // Reservar el recurso
+            if (!recurso.reservar(cantidad)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "No se pudo reservar el recurso"));
+            }
+            
+            // Actualizar la ubicación del recurso
+            recurso.setUbicacionId(zonaId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Recurso asignado exitosamente a la zona",
+                "recursoId", recursoId,
+                "zonaId", zonaId,
+                "cantidad", cantidad
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "Error al asignar recurso: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/asignaciones")
+    public ResponseEntity<List<Map<String, Object>>> obtenerAsignaciones() {
+        try {
+            // Retornar recursos agrupados por zona
+            List<Map<String, Object>> asignaciones = new ArrayList<>();
+            
+            for (Recurso recurso : sistema.getRecursos()) {
+                if (recurso.getUbicacionId() != null && !recurso.getUbicacionId().isEmpty()) {
+                    Map<String, Object> asignacion = new HashMap<>();
+                    asignacion.put("recursoId", recurso.getId());
+                    asignacion.put("zonaId", recurso.getUbicacionId());
+                    asignacion.put("cantidad", recurso.getCantidad() - recurso.getCantidadDisponible());
+                    asignacion.put("recursoNombre", recurso.getNombre());
+                    asignaciones.add(asignacion);
+                }
+            }
+            
+            return ResponseEntity.ok(asignaciones);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
